@@ -112,7 +112,7 @@ class Link(PowerAware):
 
     def remove_data_flow(self, data_flow: "DataFlow"):
         """Remove a data flow from the link."""
-        self._reserve_bandwidth(data_flow.bit_rate)
+        self._release_bandwidth(data_flow.bit_rate)
         self.data_flows.remove(data_flow)
 
     def measure_power(self) -> PowerMeasurement:

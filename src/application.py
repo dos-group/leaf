@@ -1,4 +1,5 @@
 from abc import ABC
+from functools import reduce
 from typing import List, Tuple, Type, Optional, TypeVar, Union
 
 import networkx as nx
@@ -33,7 +34,10 @@ class Task(PowerAware, ABC):
         self.node = None
 
     def measure_power(self) -> PowerMeasurement:
-        return self.node.measure_power().multiply(self.mips / self.node.used_mips)
+        try:
+            return self.node.measure_power().multiply(self.mips / self.node.used_mips)
+        except ZeroDivisionError:
+            return PowerMeasurement(0, 0)
 
 
 class SourceTask(Task):
@@ -96,7 +100,7 @@ class DataFlow(PowerAware):
         for link in self.links:
             link.add_data_flow(self)
 
-    def detach(self):
+    def deallocate(self):
         """Remove the data flow from the infrastructure and deallocate bandwidth."""
         if self.links is None:
             raise ValueError(f"{self} is not placed on any link.")
@@ -105,7 +109,8 @@ class DataFlow(PowerAware):
         self.links = None
 
     def measure_power(self) -> PowerMeasurement:
-        return sum(link.measure_power().multiply(self.bit_rate / link.used_bandwidth) for link in self.links)
+        return PowerMeasurement.sum(link.measure_power().multiply(self.bit_rate / link.used_bandwidth)
+                                    for link in self.links)
 
 
 class Application(PowerAware):
@@ -163,7 +168,7 @@ class Application(PowerAware):
             df_iter = (df for df in df_iter if isinstance(df, type_filter))
         return list(df_iter)
 
-    def detach(self):
+    def deallocate(self):
         """Detach/Unmap/Release an application from the infrastructure it is currently placed on."""
         for task in self.tasks():
             task.deallocate()
@@ -171,5 +176,5 @@ class Application(PowerAware):
             data_flow.deallocate()
 
     def measure_power(self) -> PowerMeasurement:
-        return (sum(task.measure_power() for task in self.tasks()) +
-                sum(data_flow.measure_power() for data_flow in self.data_flows()))
+        return (PowerMeasurement.sum(t.measure_power() for t in self.tasks()) +
+                PowerMeasurement.sum(df.measure_power() for df in self.data_flows()))

@@ -1,7 +1,8 @@
 import logging
 import math
 from abc import ABC, abstractmethod
-from typing import List, Union, Collection, Callable, Optional
+from functools import reduce
+from typing import List, Union, Collection, Callable, Optional, Iterable
 
 import attr
 import simpy
@@ -21,6 +22,13 @@ class PowerMeasurement:
         """
         self.dynamic = dynamic
         self.static = static
+
+    @classmethod
+    def sum(cls, measurements: Iterable["PowerMeasurement"]):
+        if (result := sum(measurements)) != 0:
+            return result
+        else:
+            return PowerMeasurement(0, 0)
 
     def __repr__(self):
         return f"PowerMeasurement(dynamic={self.dynamic}W, static={self.static}W)"
@@ -214,6 +222,9 @@ class PowerMeter:
                 measurement = sum(entity.measure_power() for entity in self.entities())
             else:
                 raise ValueError(f"{self.name}: Unsupported type {type(self.entities)} for observable={self.entities}.")
+            # TODO Rework this (sum)
+            if measurement == 0:
+                measurement = PowerMeasurement(0, 0)
             self.measurements.append(measurement)
             logger.debug(f"{self.env.now}: {self.name}: {measurement}")
             yield self.env.timeout(self.measurement_interval)
