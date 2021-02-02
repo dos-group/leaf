@@ -38,8 +38,7 @@ class City:
 
         Note: This initial allocation may change during simulation since taxis are mobile.
         """
-        for traffic_light in self._traffic_lights_in_range(taxi):
-            self.infrastructure.add_link(LinkWifiTaxiToTrafficLight(taxi, traffic_light))
+        self.infrastructure.add_link(LinkWifiTaxiToTrafficLight(taxi, self._closest_traffic_light(taxi)))
         self.orchestrator.place(taxi.application)
 
     def remove_taxi_and_stop_v2i_app(self, taxi: Taxi):
@@ -52,7 +51,7 @@ class City:
         traffic_light = TrafficLight(location, application_sink=cloud)
         self.infrastructure.add_link(LinkWanUp(traffic_light, cloud))
         self.infrastructure.add_link(LinkWanDown(cloud, traffic_light))
-        for traffic_light_ in self._traffic_lights_in_range(traffic_light):
+        for traffic_light_ in self._neighboring_traffic_lights(traffic_light):
             self.infrastructure.add_link(LinkWifiBetweenTrafficLights(traffic_light, traffic_light_))
             self.infrastructure.add_link(LinkWifiBetweenTrafficLights(traffic_light_, traffic_light))
 
@@ -70,19 +69,20 @@ class City:
         while True:
             yield self.env.timeout(UPDATE_WIFI_CONNECTIONS_INTERVAL)
             for taxi in self.infrastructure.nodes(type_filter=Taxi):
-                traffic_lights_connected = set(nx.neighbors(g, taxi.name))
-                traffic_lights_in_range = set(tl.name for tl in self._traffic_lights_in_range(taxi))
-                traffic_lights_to_remove = traffic_lights_connected - traffic_lights_in_range
-                traffic_lights_to_add = traffic_lights_in_range - traffic_lights_connected
-                for traffic_light_name in traffic_lights_to_remove:
-                    g.remove_edge(taxi.name, traffic_light_name)
-                for traffic_light_name in traffic_lights_to_add:
-                    self.infrastructure.add_link(LinkWifiTaxiToTrafficLight(taxi, self.infrastructure.node(traffic_light_name)))
+                tl_connected_name = next(g.neighbors(taxi.name))
+                tl_closest = self._closest_traffic_light(taxi)
+                if tl_connected_name != tl_closest.name:
+                    g.remove_edge(taxi.name, tl_connected_name)
+                    self.infrastructure.add_link(LinkWifiTaxiToTrafficLight(taxi, tl_closest))
 
-    def _traffic_lights_in_range(self, node) -> Iterator[TrafficLight]:
-        for traffic_light_ in self.infrastructure.nodes(type_filter=TrafficLight):
-            if node.location.distance(traffic_light_.location) <= WIFI_RANGE:
-                yield traffic_light_
+    def _neighboring_traffic_lights(self, traffic_light: TrafficLight) -> Iterator[TrafficLight]:
+        for tl in self.infrastructure.nodes(type_filter=TrafficLight):
+            distance = traffic_light.location.distance(tl.location)
+            if distance == BLOCK_SIZE_WIDTH or distance == BLOCK_SIZE_HEIGHT:
+                yield tl
+
+    def _closest_traffic_light(self, taxi: Taxi) -> TrafficLight:
+        return min(self.infrastructure.nodes(type_filter=TrafficLight), key=lambda tl: taxi.location.distance(tl.location))
 
 
 def _create_street_graph() -> Tuple[nx.Graph, List[Location], List[Location]]:

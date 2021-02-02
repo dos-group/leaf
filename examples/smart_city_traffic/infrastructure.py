@@ -5,7 +5,7 @@ import simpy
 from examples.smart_city_traffic.settings import *
 from src.application import Application, SourceTask, ProcessingTask, SinkTask
 from src.infrastructure import Link, Node
-from src.power import PowerModelLink, PowerModelNode, PowerModelNodeShared
+from src.power import PowerModelLink, PowerModelNode, PowerModelNodeShared, PowerMeasurement
 
 """Counter for incrementally naming nodes"""
 _fog_nodes_created = 0
@@ -26,6 +26,26 @@ class FogNode(Node):
                          power_model=PowerModelNode(max_power=FOG_MAX_POWER, static_power=FOG_STATIC_POWER))
         _fog_nodes_created += 1
         self.location = location
+        self.shutdown = FOG_IDLE_SHUTDOWN
+
+    def measure_power(self) -> PowerMeasurement:
+        if self.shutdown:
+            return PowerMeasurement(0, 0)
+        else:
+            return super().measure_power()
+
+    def add_task(self, task: "Task"):
+        if self.shutdown:
+            self.shutdown = False
+        super().add_task(task)
+
+    def remove_task(self, task: "Task"):
+        super().remove_task(task)
+        if FOG_IDLE_SHUTDOWN and self.used_mips == 0:
+            self.shutdown = True
+
+
+
 
 
 class TrafficLight(Node):

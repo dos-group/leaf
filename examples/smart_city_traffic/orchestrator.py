@@ -1,10 +1,11 @@
+import logging
 import math
 
 from examples.smart_city_traffic.infrastructure import FogNode, Cloud
-from examples.smart_city_traffic.settings import FOG_SHUTDOWN_DEADLINE, FOG_UTILIZATION_THRESHOLD, FOG_DCS
+from examples.smart_city_traffic.settings import FOG_UTILIZATION_THRESHOLD, FOG_DCS, FOG_IDLE_SHUTDOWN
 from src.application import Application, ProcessingTask
 from src.infrastructure import Infrastructure, Node
-from src.orchestrator import Orchestrator, PlacementError
+from src.orchestrator import Orchestrator
 
 
 class CityOrchestrator(Orchestrator):
@@ -17,7 +18,7 @@ class CityOrchestrator(Orchestrator):
         result_node = None
 
         if FOG_DCS > 0:
-            if FOG_SHUTDOWN_DEADLINE:
+            if FOG_IDLE_SHUTDOWN:
                 highest_utilization_below_threshold = -1
                 for fog_node in self.infrastructure.nodes(type_filter=FogNode):
                     if highest_utilization_below_threshold < fog_node.utilization() < self.utilization_threshold:
