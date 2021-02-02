@@ -15,9 +15,12 @@ class Task(PowerAware, ABC):
         Args:
             mips: Million instructions per second required to execute the task.
         """
-        self.mips = mips
         self.id: Optional[int] = None
+        self.mips = mips
         self.node: Optional[Node] = None
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(id={self.id}, mips={self.mips})"
 
     def allocate(self, node: Node):
         """Place the task on a certain node and allocate resources."""
@@ -92,6 +95,9 @@ class DataFlow(PowerAware):
         self.bit_rate = bit_rate
         self.links: Optional[List[Link]] = None
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}(bit_rate={self.bit_rate})"
+
     def allocate(self, links: List[Link]):
         """Place the data flow on a path of links and allocate bandwidth."""
         if self.links is not None:
@@ -124,7 +130,7 @@ class Application(PowerAware):
         self.graph = nx.DiGraph()
 
     def __repr__(self):
-        return f"Application(tasks={len(self.tasks())})"
+        return f"{self.__class__.__name__}(tasks={len(self.tasks())})"
 
     def add_task(self, task: Task, incoming_data_flows: List[Tuple[Task, float]] = None):
         """Add a task to the application graph.
@@ -176,5 +182,5 @@ class Application(PowerAware):
             data_flow.deallocate()
 
     def measure_power(self) -> PowerMeasurement:
-        return (PowerMeasurement.sum(t.measure_power() for t in self.tasks()) +
-                PowerMeasurement.sum(df.measure_power() for df in self.data_flows()))
+        measurements = [t.measure_power() for t in self.tasks()] + [df.measure_power() for df in self.data_flows()]
+        return PowerMeasurement.sum(measurements)

@@ -4,7 +4,6 @@ from abc import ABC, abstractmethod
 from functools import reduce
 from typing import List, Union, Collection, Callable, Optional, Iterable
 
-import attr
 import simpy
 
 
@@ -25,10 +24,8 @@ class PowerMeasurement:
 
     @classmethod
     def sum(cls, measurements: Iterable["PowerMeasurement"]):
-        if (result := sum(measurements)) != 0:
-            return result
-        else:
-            return PowerMeasurement(0, 0)
+        dynamic, static = reduce(lambda acc, cur: (acc[0] + cur.dynamic, acc[1] + cur.static), measurements, (0, 0))
+        return PowerMeasurement(dynamic, static)
 
     def __repr__(self):
         return f"PowerMeasurement(dynamic={self.dynamic}W, static={self.static}W)"
@@ -89,7 +86,7 @@ class PowerModelNode(PowerModel):
         self.node = None
 
     def measure(self) -> PowerMeasurement:
-        dynamic_power = (self.max_power - self.static_power) * self.node.used_mips
+        dynamic_power = (self.max_power - self.static_power) * self.node.utilization()
         return PowerMeasurement(dynamic=dynamic_power, static=self.static_power)
 
     def set_parent(self, parent):
@@ -215,16 +212,15 @@ class PowerMeter:
         yield self.env.timeout(self.delay)
         while self.env.now < self.end_time:
             if isinstance(self.entities, PowerAware):
-                measurement = self.entities.measure_power()
-            elif isinstance(self.entities, Collection):
-                measurement = sum(entity.measure_power() for entity in self.entities)
-            elif isinstance(self.entities, Callable):
-                measurement = sum(entity.measure_power() for entity in self.entities())
+                measurement = self.measurements.append(self.entities.measure_power())
             else:
-                raise ValueError(f"{self.name}: Unsupported type {type(self.entities)} for observable={self.entities}.")
-            # TODO Rework this (sum)
-            if measurement == 0:
-                measurement = PowerMeasurement(0, 0)
+                if isinstance(self.entities, Collection):
+                    entities = self.entities
+                elif isinstance(self.entities, Callable):
+                    entities = self.entities()
+                else:
+                    raise ValueError(f"{self.name}: Unsupported type {type(self.entities)} for observable={self.entities}.")
+                measurement = PowerMeasurement.sum(entity.measure_power() for entity in entities)
             self.measurements.append(measurement)
             logger.debug(f"{self.env.now}: {self.name}: {measurement}")
             yield self.env.timeout(self.measurement_interval)

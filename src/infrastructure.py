@@ -36,7 +36,7 @@ class Node(PowerAware):
 
     def __repr__(self):
         mips_repr = self.mips if self.mips is not None else "∞"
-        return f"Node('{self.name}', mips={self.used_mips}/{mips_repr})"
+        return f"{self.__class__.__name__}('{self.name}', mips={self.used_mips}/{mips_repr})"
 
     def utilization(self) -> float:
         """Return the current utilization of the resource in the range [0, 1]."""
@@ -103,7 +103,7 @@ class Link(PowerAware):
 
     def __repr__(self):
         latency_repr = f", latency={self.latency}" if self.latency else ""
-        return f"Link('{self.src.name}' -> '{self.dst.name}', bandwidth={self.used_bandwidth}/{self.bandwidth}{latency_repr})"
+        return f"{self.__class__.__name__}('{self.src.name}' -> '{self.dst.name}', bandwidth={self.used_bandwidth}/{self.bandwidth}{latency_repr})"
 
     def add_data_flow(self, data_flow: "DataFlow"):
         """Add a data flow to the link."""
@@ -158,7 +158,7 @@ class Infrastructure(PowerAware):
         """Add a link to the infrastructure. Missing nodes will be added automatically."""
         self.add_node(link.src)
         self.add_node(link.dst)
-        self.graph.add_edge(link.src.name, link.dst.name, data=link)
+        self.graph.add_edge(link.src.name, link.dst.name, data=link, latency=link.latency)
 
     def add_node(self, node: Node):
         """Adds a node to the infrastructure."""
@@ -184,5 +184,6 @@ class Infrastructure(PowerAware):
         return list(links)
 
     def measure_power(self) -> PowerMeasurement:
-        return (sum(node.measure_power() for node in self.nodes()) +
-                sum(link.measure_power() for link in self.links()))
+        measurements = [node.measure_power() for node in self.nodes()] + [link.measure_power() for link in self.links()]
+        return PowerMeasurement.sum(measurements)
+
