@@ -1,28 +1,28 @@
 # LEAF [![PyPI version fury.io](https://badge.fury.io/py/leafsim.svg)](https://pypi.org/project/leafsim/) [![Supported versions](https://img.shields.io/pypi/pyversions/leafsim.svg)](https://pypi.org/project/leafsim/) [![License](https://img.shields.io/pypi/l/leafsim.svg)](https://pypi.org/project/leafsim/)
 
 A simulator for **L**arge **E**nergy-**A**ware **F**og computing environments.
-LEAF enables energy consumption modeling of distributed, heterogeneous, and resource-constrained infrastructure that executes complex application graphs.
-
-Features include:
-
-- **Power modeling**: Model the power usage of individual compute nodes, network traffic and applications
-- **Energy-aware algorithms**: Implement dynamically adapting task placement strategies, routing policies, and other energy-saving mechanisms
-- **Dynamic networks**: Nodes can be mobile and can join or leave the network during the simulation
-- **Scalability**: Simulate thousands of devices and applications in magnitudes faster than real time
-- **Exporting**: Export power usage characteristics and other results as CSV files for further analysis
+LEAF enables modeling of distributed, heterogeneous, and resource-constrained infrastructure that executes complex application graphs.
 
 <p align="center">
-  <img src="/images/infrastructure.png">
+  <img src="/docs/_static/infrastructure.png">
 </p>
-
-
-## Under Development
 
 This Python implementation was ported from the [original Java protoype](https://www.github.com/birnbaum/leaf).
 All future development will take place in this repository.
-However, the code is currently under early development and only comes with a minimal working example you can find under `examples/simple`.
 
-Further examples, including the smart city traffic scenario implemented in the Java prototype will follow soon.
+
+## Documentation
+
+Please visit the official [documentation](https://leaf.readthedocs.io) for more information and examples on this project.
+
+
+## Installation
+
+You can use LEAF either by directly cloning this repository or installing the latest release via [pip](https://pip.pypa.io/en/stable/quickstart/):
+
+```
+$ pip install leafsim
+```
 
 
 ## Publications

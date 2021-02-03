@@ -38,6 +38,8 @@ pandas = "^1.2.1"
 tqdm = "^4.0.0"
 
 [tool.poetry.dev-dependencies]
+Sphinx = "^3.4.3"
+alabaster = "^0.7.12"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
