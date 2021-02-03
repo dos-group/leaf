@@ -1,4 +1,4 @@
-# LEAF 🌱
+# LEAF [![PyPI version fury.io](https://badge.fury.io/py/leafsim.svg)](https://pypi.org/project/leafsim/) [![Supported versions](https://img.shields.io/pypi/pyversions/leafsim.svg)](https://pypi.org/project/leafsim/) [![License](https://img.shields.io/pypi/l/leafsim.svg)](https://pypi.org/project/leafsim/)
 
 A simulator for **L**arge **E**nergy-**A**ware **F**og computing environments.
 LEAF enables energy consumption modeling of distributed, heterogeneous, and resource-constrained infrastructure that executes complex application graphs.

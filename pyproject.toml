@@ -1,12 +1,14 @@
 [tool.poetry]
-name = "leaf"
-version = "0.1.0"
+name = "leafsim"
+version = "0.1.1"
 description = "A simulator for Large Energy-Aware Fog computing environments."
 authors = ["Philipp Wiesner <wiesner@tu-berlin.de>"]
 license = "MIT"
 repository = "https://github.com/dos-group/leaf"
 readme = "README.md"
 keywords = ["simulation", "modeling", "fog computing", "energy consumption", "edge computing"]
+packages = [{ include = "leaf" }]
+exclude = ["leaf/examples"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Education",
@@ -31,9 +33,9 @@ classifiers = [
 python = "^3.7.9"
 simpy = "^4.0.0"
 networkx = "^2.5"
-tqdm = "^4.0.0"
 numpy = "^1.20.0"
 pandas = "^1.2.1"
+tqdm = "^4.0.0"
 
 [tool.poetry.dev-dependencies]
 
