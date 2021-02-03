@@ -1,7 +1,6 @@
 import os
 import sys
 
-import pkg_resources
 from datetime import datetime
 import alabaster
 
@@ -12,9 +11,15 @@ sys.path.insert(0, os.path.abspath('../leaf'))
 
 project = "LEAF"
 author = "Philipp Wiesner"
-copyright = f"{datetime.now().year}, {author}"
+copyright = f"{datetime.now().year} {author}"
 # The short X.Y version
-version = pkg_resources.get_distribution('leaf').version
+
+try:
+    import importlib.metadata
+    version = importlib.metadata.version('leafsim')
+except ModuleNotFoundError:  # Python <3.8
+    import pkg_resources
+    version = pkg_resources.get_distribution('leaf').version
 # The full version, including alpha/beta/rc tags
 release = version
 
