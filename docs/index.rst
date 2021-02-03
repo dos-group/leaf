@@ -9,7 +9,7 @@ It enables modeling of distributed, heterogeneous, and resource-constrained infr
 
 A special emphasis was put on the modeling of energy consumption (and soon carbon emissions).
 
-.. image:: ../_static/infrastructure.png
+.. image:: _static/infrastructure.png
     :alt: Alternative text
 
 What can I do with it?
@@ -38,7 +38,7 @@ such as data centers or sensors and edges are network links. Applications are re
 
 This allows for easy to configure and easy to analyze experiments that are fast to execute.
 
-.. image:: ../_static/graph-model.png
+.. image:: _static/graph-model.png
     :width: 450px
     :align: center
 
@@ -54,7 +54,7 @@ Bringing it to life
 
 Now, in order to enable dynamic components such as mobile nodes, we can **change** the configuration, quantity and placement of these graphs through events:
 
-.. image:: ../_static/des.png
+.. image:: _static/des.png
     :width: 400px
     :align: center
 
@@ -68,10 +68,10 @@ That's very theoretical...
 
 To ease your start with LEAF, we provide some examples:
 
-- The `simple <https://github.com/dos-group/leaf/blob/main/leaf/examples/simple/main.py>`_ scenario implements a data center,
+- The `simple scenario <https://github.com/dos-group/leaf/blob/main/leaf/examples/simple/main.py>`_ implements a data center,
   a fog node and a sensor that execute a simple application.
-- The `smart city traffic <https://github.com/dos-group/leaf/blob/main/leaf/examples/simple/main.py>`_ scenario is a lot more complicated.
-  It simulates the traffic of taxis and the execution of two different types of applications in a connected city center.
+- The `smart city traffic scenario <https://github.com/dos-group/leaf/blob/main/leaf/examples/simple/main.py>`_ is a lot more complicated.
+  It simulates the traffic of taxis and the execution of two different kinds of applications in a connected city center.
   You can read up on the setup and results of this scenario in `this paper <[under review]>`_.
 
 
