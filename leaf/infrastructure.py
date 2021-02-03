@@ -1,5 +1,5 @@
 import math
-from typing import List, Optional, Type, TypeVar, Iterator, Union, Collection, Tuple
+from typing import List, Optional, Type, TypeVar, Iterator, Union, Tuple
 
 import networkx as nx
 
@@ -80,10 +80,11 @@ class Link(PowerAware):
         """A network link in the infrastructure graph.
 
         This can represent any kind of network link, e.g.
+
         - direct cable connections
         - wireless connections such as WiFi, Bluetooth, LoRaWAN, 4G LTE, 5G, ...
         - entire wide area network connections that incorporate different networking equipment you do not want to
-            model explicitly.
+          model explicitly.
 
         Args:
             src: Source node of the network link.
@@ -135,10 +136,10 @@ class Link(PowerAware):
 
 
 class Infrastructure(PowerAware):
-    TNode = TypeVar("TNode", bound=Node)  # Generics
-    TLink = TypeVar("TLink", bound=Link)  # Generics
-    NodeTypeFilter = Union[Type[TNode], Tuple[Type[TNode], ...]]
-    LinkTypeFilter = Union[Type[TLink], Tuple[Type[TLink], ...]]
+    _TNode = TypeVar("_TNode", bound=Node)  # Generics
+    _TLink = TypeVar("_TLink", bound=Link)  # Generics
+    _NodeTypeFilter = Union[Type[_TNode], Tuple[Type[_TNode], ...]]
+    _LinkTypeFilter = Union[Type[_TLink], Tuple[Type[_TLink], ...]]
 
     def __init__(self):
         """Infrastructure graph of the simulated scenario.
@@ -169,14 +170,14 @@ class Infrastructure(PowerAware):
         """Removes a node from the infrastructure."""
         self.graph.remove_node(node.name)
 
-    def nodes(self, type_filter: Optional[NodeTypeFilter] = None) -> List[TNode]:
+    def nodes(self, type_filter: Optional[_NodeTypeFilter] = None) -> List[_TNode]:
         """Return all nodes in the infrastructure, optionally filtered by class."""
         nodes: Iterator[Node] = (v for _, v in self.graph.nodes.data("data"))
         if type_filter is not None:
             nodes = (node for node in nodes if isinstance(node, type_filter))
         return list(nodes)
 
-    def links(self, type_filter: Optional[LinkTypeFilter] = None) -> List[TLink]:
+    def links(self, type_filter: Optional[_LinkTypeFilter] = None) -> List[_TLink]:
         """Return all links in the infrastructure, optionally filtered by class."""
         links: Iterator[Link] = (v for _, _, v in self.graph.edges.data("data"))
         if type_filter is not None:

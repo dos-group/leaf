@@ -7,8 +7,6 @@ import simpy
 from leaf.examples.smart_city_traffic.infrastructure import TrafficLight, Taxi
 from leaf.examples.smart_city_traffic.settings import UPDATE_MOBILITY_INTERVAL, MAX_CARS_PER_MINUTE, RNG, \
     TAXI_COUNT_DISTRIBUTION, TAXI_SPEED_DISTRIBUTION
-from leaf.infrastructure import Node
-
 
 
 class Location:

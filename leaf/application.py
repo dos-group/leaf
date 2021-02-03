@@ -1,5 +1,4 @@
 from abc import ABC
-from functools import reduce
 from typing import List, Tuple, Type, Optional, TypeVar, Union
 
 import networkx as nx
@@ -121,10 +120,10 @@ class DataFlow(PowerAware):
 
 class Application(PowerAware):
     """Application consisting of one or more tasks forming a directed acyclic graph (DAG)."""
-    TTask = TypeVar("TTask", bound=Task)  # Generics
-    TDataFlow = TypeVar("TDataFlow", bound=DataFlow)  # Generics
-    TaskTypeFilter = Union[Type[TTask], Tuple[Type[TTask], ...]]
-    DataFlowTypeFilter = Union[Type[TDataFlow], Tuple[Type[TDataFlow], ...]]
+    _TTask = TypeVar("TTask", bound=Task)  # Generics
+    _TDataFlow = TypeVar("TDataFlow", bound=DataFlow)  # Generics
+    _TaskTypeFilter = Union[Type[_TTask], Tuple[Type[_TTask], ...]]
+    _DataFlowTypeFilter = Union[Type[_TDataFlow], Tuple[Type[_TDataFlow], ...]]
 
     def __init__(self):
         self.graph = nx.DiGraph()
@@ -160,14 +159,14 @@ class Application(PowerAware):
         else:
             raise ValueError(f"Unknown task type '{type(task)}'")
 
-    def tasks(self, type_filter: Optional[TaskTypeFilter] = None) -> List[TTask]:
+    def tasks(self, type_filter: Optional[_TaskTypeFilter] = None) -> List[_TTask]:
         """Return all tasks in the application, optionally filtered by class."""
         task_iter = (task for _, task in self.graph.nodes.data("data"))
         if type_filter:
             task_iter = (task for task in task_iter if isinstance(task, type_filter))
         return list(task_iter)
 
-    def data_flows(self, type_filter: Optional[DataFlowTypeFilter] = None) -> List[TDataFlow]:
+    def data_flows(self, type_filter: Optional[_DataFlowTypeFilter] = None) -> List[_TDataFlow]:
         """Return all data flows in the application, optionally filtered by class."""
         df_iter = [v for _, _, v in self.graph.edges.data("data")]
         if type_filter:

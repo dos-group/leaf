@@ -6,7 +6,6 @@ from typing import List, Union, Collection, Callable, Optional, Iterable
 
 import simpy
 
-
 logger = logging.getLogger(__name__)
 _unnamed_power_meters_created = 0
 
@@ -53,6 +52,7 @@ class PowerMeasurement:
 
 
 class PowerModel(ABC):
+    """Abstract base class for power models."""
     # TODO: Validator! Only one power model per entity
 
     @abstractmethod
@@ -141,7 +141,7 @@ class PowerModelLinkWirelessTx(PowerModel):
 
         Note:
             If you don't know the amplifier dissipation or distance of nodes or if you are concerned with performance,
-                you can also just use the regular :class:`PowerModelLink`
+            you can also just use the regular :class:`PowerModelLink`
 
         Args:
             energy_per_bit: Incremental energy per bit in J/bit (or W/(bit/s))
@@ -162,6 +162,10 @@ class PowerModelLinkWirelessTx(PowerModel):
 
 
 class PowerAware(ABC):
+    """Abstract base class for entites whose power can be measured.
+
+    This may be parts of the infrastructure as well as applications.
+    """
 
     @abstractmethod
     def measure_power(self) -> PowerMeasurement:
@@ -180,11 +184,9 @@ class PowerMeter:
 
         Args:
             env: Simpy environment (for timing the measurements)
-            entities: Can be either
-                1. A single :class:`PowerAware` entity
-                1. A list of :class:`PowerAware` entities
-                1. Function which returns a list of :class:`PowerAware` entities, if the number of these entities
-                    changes during the simulation
+            entities: Can be either (1) a single :class:`PowerAware` entity (2) a list of :class:`PowerAware` entities
+                (3) a function which returns a list of :class:`PowerAware` entities, if the number of these entities
+                changes during the simulation.
             name: Name of the power meter for logging and reporting
             measurement_interval: The measurement interval.
             delay: The delay after which the measurements shall be conducted. For some scenarios it makes sense to e.g.

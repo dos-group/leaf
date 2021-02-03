@@ -54,8 +54,3 @@ class Orchestrator(ABC):
     @abstractmethod
     def _processing_task_placement(self, processing_task: ProcessingTask, application: Application) -> Node:
         pass
-
-
-class PlacementError(Exception):
-    """Raised when the input value is too small."""
-    pass

@@ -1,7 +1,6 @@
 from typing import List, Tuple, Iterator
 
 import networkx as nx
-import numpy as np
 import simpy
 
 from leaf.examples.smart_city_traffic.infrastructure import Cloud, FogNode, TrafficLight, LinkWanUp, LinkEthernet, \

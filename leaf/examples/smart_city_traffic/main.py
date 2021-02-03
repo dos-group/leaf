@@ -9,7 +9,7 @@ from leaf.examples.smart_city_traffic.infrastructure import Cloud, FogNode, Taxi
     LinkWifiTaxiToTrafficLight, LinkWifiBetweenTrafficLights, TrafficLight
 from leaf.examples.smart_city_traffic.mobility import MobilityManager
 from leaf.examples.smart_city_traffic.settings import SIMULATION_TIME, FOG_DCS, POWER_MEASUREMENT_INTERVAL, \
-    PROGRESSBAR_UPDATE_INTERVAL, FOG_IDLE_SHUTDOWN
+    FOG_IDLE_SHUTDOWN
 from leaf.infrastructure import Infrastructure
 from leaf.power import PowerMeter
 
@@ -18,14 +18,17 @@ logging.basicConfig(level=logging.WARN, format='%(levelname)s: %(message)s')
 
 
 def main(count_taxis: bool, measure_infrastructure: bool, measure_applications: bool):
+    # ----------------- Set up experiment -----------------
     env = simpy.Environment()
-
     city = City(env)
     MobilityManager(env, city)
 
+    # ----------------- Initialize meters -----------------
     if count_taxis:
+        # Measures the amount of taxis on the map
         taxi_counter = TaxiCounter(env, city.infrastructure)
     if measure_infrastructure:
+        # Measures the power usage of cloud and fog nodes as well as WAN and WiFi links
         pm_cloud = _PowerMeter(env, entities=city.infrastructure.nodes(type_filter=Cloud), name="cloud")
         pm_fog = _PowerMeter(env, entities=city.infrastructure.nodes(type_filter=FogNode), name="fog")
         pm_wan_up = _PowerMeter(env, entities=city.infrastructure.links(type_filter=LinkWanUp), name="wan_up")
@@ -33,13 +36,15 @@ def main(count_taxis: bool, measure_infrastructure: bool, measure_applications: 
         pm_wifi = _PowerMeter(env, entities=lambda: city.infrastructure.links(
             type_filter=(LinkWifiBetweenTrafficLights, LinkWifiTaxiToTrafficLight)), name="wifi")
     if measure_applications:
+        # Measures the power usage of the V2I and CCTV applications
         pm_v2i = _PowerMeter(env, entities=lambda: [taxi.application for taxi in city.infrastructure.nodes(type_filter=Taxi)], name="v2i")
         pm_cctv = _PowerMeter(env, entities=lambda: [tl.application for tl in city.infrastructure.nodes(type_filter=TrafficLight)], name="cctv")
 
-    for until in tqdm(range(PROGRESSBAR_UPDATE_INTERVAL, SIMULATION_TIME, PROGRESSBAR_UPDATE_INTERVAL), total=SIMULATION_TIME/PROGRESSBAR_UPDATE_INTERVAL):
+    # ------------------ Run experiment -------------------
+    for until in tqdm(range(1, SIMULATION_TIME)):
         env.run(until=until)
-    env.run(until=SIMULATION_TIME)
 
+    # ------------------ Write results --------------------
     result_dir = f"results/fog_{FOG_DCS}"
     if FOG_IDLE_SHUTDOWN:
         result_dir += "_shutdown"
