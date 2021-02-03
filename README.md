@@ -1,4 +1,4 @@
-# Leaf 🌱
+# LEAF 🌱
 
 A simulator for **L**arge **E**nergy-**A**ware **F**og computing environments.
 LEAF enables energy consumption modeling of distributed, heterogeneous, and resource-constrained infrastructure that executes complex application graphs.
