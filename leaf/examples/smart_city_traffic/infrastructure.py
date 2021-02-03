@@ -2,10 +2,10 @@ from typing import List
 
 import simpy
 
-from examples.smart_city_traffic.settings import *
-from src.application import Application, SourceTask, ProcessingTask, SinkTask
-from src.infrastructure import Link, Node
-from src.power import PowerModelLink, PowerModelNode, PowerModelNodeShared, PowerMeasurement
+from leaf.examples.smart_city_traffic.settings import *
+from leaf.application import Application, SourceTask, ProcessingTask, SinkTask
+from leaf.infrastructure import Link, Node
+from leaf.power import PowerModelLink, PowerModelNode, PowerModelNodeShared, PowerMeasurement
 
 """Counter for incrementally naming nodes"""
 _fog_nodes_created = 0

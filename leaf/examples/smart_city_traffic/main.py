@@ -4,14 +4,14 @@ from os import makedirs
 import simpy
 from tqdm import tqdm
 
-from examples.smart_city_traffic.city import City
-from examples.smart_city_traffic.infrastructure import Cloud, FogNode, Taxi, LinkWanDown, LinkWanUp, \
+from leaf.examples.smart_city_traffic.city import City
+from leaf.examples.smart_city_traffic.infrastructure import Cloud, FogNode, Taxi, LinkWanDown, LinkWanUp, \
     LinkWifiTaxiToTrafficLight, LinkWifiBetweenTrafficLights, TrafficLight
-from examples.smart_city_traffic.mobility import MobilityManager
-from examples.smart_city_traffic.settings import SIMULATION_TIME, FOG_DCS, POWER_MEASUREMENT_INTERVAL, \
+from leaf.examples.smart_city_traffic.mobility import MobilityManager
+from leaf.examples.smart_city_traffic.settings import SIMULATION_TIME, FOG_DCS, POWER_MEASUREMENT_INTERVAL, \
     PROGRESSBAR_UPDATE_INTERVAL, FOG_IDLE_SHUTDOWN
-from src.infrastructure import Infrastructure
-from src.power import PowerMeter
+from leaf.infrastructure import Infrastructure
+from leaf.power import PowerMeter
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.WARN, format='%(levelname)s: %(message)s')
@@ -84,4 +84,4 @@ class TaxiCounter:
 
 
 if __name__ == '__main__':
-    main(count_taxis=True, measure_infrastructure=True, measure_applications=True)
+    main(count_taxis=True, measure_infrastructure=True, measure_applications=False)

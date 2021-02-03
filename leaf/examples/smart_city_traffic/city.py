@@ -4,12 +4,12 @@ import networkx as nx
 import numpy as np
 import simpy
 
-from examples.smart_city_traffic.infrastructure import Cloud, FogNode, TrafficLight, LinkWanUp, LinkEthernet, \
+from leaf.examples.smart_city_traffic.infrastructure import Cloud, FogNode, TrafficLight, LinkWanUp, LinkEthernet, \
     LinkWifiBetweenTrafficLights, LinkWanDown, LinkWifiTaxiToTrafficLight, Taxi
-from examples.smart_city_traffic.mobility import Location
-from examples.smart_city_traffic.orchestrator import CityOrchestrator
-from examples.smart_city_traffic.settings import *
-from src.infrastructure import Infrastructure
+from leaf.examples.smart_city_traffic.mobility import Location
+from leaf.examples.smart_city_traffic.orchestrator import CityOrchestrator
+from leaf.examples.smart_city_traffic.settings import *
+from leaf.infrastructure import Infrastructure
 
 
 class City:

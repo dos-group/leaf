@@ -3,7 +3,7 @@ from typing import List, Optional, Type, TypeVar, Iterator, Union, Collection, T
 
 import networkx as nx
 
-from src.power import PowerAware, PowerMeasurement
+from leaf.power import PowerAware, PowerMeasurement
 
 
 class Node(PowerAware):

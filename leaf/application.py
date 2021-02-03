@@ -4,8 +4,8 @@ from typing import List, Tuple, Type, Optional, TypeVar, Union
 
 import networkx as nx
 
-from src.infrastructure import Node, Link
-from src.power import PowerAware, PowerMeasurement
+from leaf.infrastructure import Node, Link
+from leaf.power import PowerAware, PowerMeasurement
 
 
 class Task(PowerAware, ABC):

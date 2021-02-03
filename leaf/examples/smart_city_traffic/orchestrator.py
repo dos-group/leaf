@@ -1,11 +1,11 @@
 import logging
 import math
 
-from examples.smart_city_traffic.infrastructure import FogNode, Cloud
-from examples.smart_city_traffic.settings import FOG_UTILIZATION_THRESHOLD, FOG_DCS, FOG_IDLE_SHUTDOWN
-from src.application import Application, ProcessingTask
-from src.infrastructure import Infrastructure, Node
-from src.orchestrator import Orchestrator
+from leaf.examples.smart_city_traffic.infrastructure import FogNode, Cloud
+from leaf.examples.smart_city_traffic.settings import FOG_UTILIZATION_THRESHOLD, FOG_DCS, FOG_IDLE_SHUTDOWN
+from leaf.application import Application, ProcessingTask
+from leaf.infrastructure import Infrastructure, Node
+from leaf.orchestrator import Orchestrator
 
 
 class CityOrchestrator(Orchestrator):

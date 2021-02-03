@@ -3,10 +3,10 @@ import random
 
 import simpy
 
-from src.application import Application, SourceTask, ProcessingTask, SinkTask
-from src.infrastructure import Node, Link, Infrastructure
-from src.orchestrator import Orchestrator
-from src.power import PowerModelNode, PowerModelNodeShared, PowerModelLink, PowerMeter
+from leaf.application import Application, SourceTask, ProcessingTask, SinkTask
+from leaf.infrastructure import Node, Link, Infrastructure
+from leaf.orchestrator import Orchestrator
+from leaf.power import PowerModelNode, PowerModelNodeShared, PowerModelLink, PowerMeter
 
 RANDOM_SEED = 1
 
