@@ -5,6 +5,7 @@ description = "A simulator for Large Energy-Aware Fog computing environments."
 authors = ["Philipp Wiesner <wiesner@tu-berlin.de>"]
 license = "MIT"
 repository = "https://github.com/dos-group/leaf"
+documentation = "https://leaf.readthedocs.io"
 readme = "README.md"
 keywords = ["simulation", "modeling", "fog computing", "energy consumption", "edge computing"]
 packages = [{ include = "leaf" }]

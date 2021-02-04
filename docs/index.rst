@@ -5,8 +5,7 @@ What is LEAF?
 -------------
 
 LEAF is a simulator for **L**\ arge **E**\ nergy-**A**\ ware **F**\ og computing environments.
-It enables modeling of distributed, heterogeneous, and resource-constrained infrastructures that execute complex application graphs.
-
+It enables then modeling of complex application graphs in distributed, heterogeneous, and resource-constrained infrastructures.
 A special emphasis was put on the modeling of energy consumption (and soon carbon emissions).
 
 .. image:: _static/infrastructure.png
@@ -32,9 +31,9 @@ How does it work?
 -----------------
 
 Unlike other discrete event simulators for computer networks, LEAF models infrastructure and applications on a high
-level based on graphs. Infrastructure is represented as a directed, weighted multigraph where vertices are compute nodes
-such as data centers or sensors and edges are network links. Applications are represented as
-`directed acyclic graphs (DAG) <https://en.wikipedia.org/wiki/Directed_acyclic_graph>`_, where vertices are tasks and edges are data flows between those tasks.
+level based on graphs. The infrastructure graph consists of compute nodes
+such as data centers or sensors that are connected via network links. Applications are represented as
+`directed acyclic graphs (DAG) <https://en.wikipedia.org/wiki/Directed_acyclic_graph>`_, where tasks are connected via flows between.
 
 This allows for easy to configure and easy to analyze experiments that are fast to execute.
 
@@ -46,30 +45,36 @@ The above example shows:
 
 - an infrastructure graph with its resource constraints and power usage characteristics (black)
 - a placed application with its resource requirements (orange)
-- and its resulting power usage on the infrastructure components (green)
+- and its resulting power usage on the infrastructure (green)
 
+In this configuration, the application’s combined power usage is 13.12 W.
 
-Bringing it to life
-...................
+How to model change over time?
+..............................
 
-Now, in order to enable dynamic components such as mobile nodes, we can **change** the configuration, quantity and placement of these graphs through events:
+The above example models the application's power usage at a specific point in time.
+Now, in order to enable dynamically changing components such as mobile nodes, we can **update** the parameters, quantity and placement of infrastructure as well as applications through events:
 
 .. image:: _static/des.png
     :width: 400px
     :align: center
 
-Of course, components can **read** from the graphs via events, too. Examples for this are algorithm that change their behaviour based on certain system states or power meters that periodically measure the power usage of a component.
+Components can **read** from via events, too.
+Examples for this are power meters that periodically measure the power usage of a component or placement strategies that change their behaviour based on certain system states.
 
-For a more detailed explanation, read `our paper <[under review]>`_ :)
+LEAF allows you to model different kinds of algorithms, hardware (think of batteries that update their state of charge) and energy-saving mechanisms.
+LEAF is *no* suitable tool if you require a low-level modeling of packet traffic for simulating effects like network congestion.
+
+For a detailed explanation of the model, please read `our paper <[under review]>`_.
 
 
-That's very theoretical...
---------------------------
+How do I use it?
+----------------
 
 To ease your start with LEAF, we provide some examples:
 
 - The `simple scenario <https://github.com/dos-group/leaf/blob/main/leaf/examples/simple/main.py>`_ implements a data center,
-  a fog node and a sensor that execute a simple application.
+  a fog node and a sensor that execute a simple application. Play around with the different parameters to see how resource constraints and task placement strategies affect the simulation.
 - The `smart city traffic scenario <https://github.com/dos-group/leaf/blob/main/leaf/examples/simple/main.py>`_ is a lot more complicated.
   It simulates the traffic of taxis and the execution of two different kinds of applications in a connected city center.
   You can read up on the setup and results of this scenario in `this paper <[under review]>`_.
@@ -89,3 +94,11 @@ The paper behind LEAF is currently under review:
     self
     changelog
     reference/modules
+
+
+Contact
+-------
+
+LEAF was developed at the research group for `Adaptive Resource Management (ARM) <https://www.dos.tu-berlin.de/arm>`_, part of the research group for `Distributed and Operating Systems (DOS) <https://www.dos.tu-berlin.de>`_, at TU Berlin.
+
+In case of questions, please reach out to `Philipp Wiesner <https://www.dos.tu-berlin.de/menue/people/wiesner_philipp/>`_.

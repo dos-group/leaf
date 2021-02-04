@@ -1,7 +1,7 @@
 # LEAF [![PyPI version fury.io](https://badge.fury.io/py/leafsim.svg)](https://pypi.org/project/leafsim/) [![Supported versions](https://img.shields.io/pypi/pyversions/leafsim.svg)](https://pypi.org/project/leafsim/) [![License](https://img.shields.io/pypi/l/leafsim.svg)](https://pypi.org/project/leafsim/)
 
 A simulator for **L**arge **E**nergy-**A**ware **F**og computing environments.
-LEAF enables modeling of distributed, heterogeneous, and resource-constrained infrastructure that executes complex application graphs.
+LEAF enables then modeling of complex application graphs in distributed, heterogeneous, and resource-constrained infrastructures.
 
 <p align="center">
   <img src="/docs/_static/infrastructure.png">
