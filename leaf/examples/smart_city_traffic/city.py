@@ -50,7 +50,7 @@ class City:
         traffic_light = TrafficLight(location, application_sink=cloud)
         self.infrastructure.add_link(LinkWanUp(traffic_light, cloud))
         self.infrastructure.add_link(LinkWanDown(cloud, traffic_light))
-        for traffic_light_ in self._neighboring_traffic_lights(traffic_light):
+        for traffic_light_ in self._traffic_lights_in_range(traffic_light):
             self.infrastructure.add_link(LinkWifiBetweenTrafficLights(traffic_light, traffic_light_))
             self.infrastructure.add_link(LinkWifiBetweenTrafficLights(traffic_light_, traffic_light))
 
@@ -74,10 +74,9 @@ class City:
                     g.remove_edge(taxi.name, tl_connected_name)
                     self.infrastructure.add_link(LinkWifiTaxiToTrafficLight(taxi, tl_closest))
 
-    def _neighboring_traffic_lights(self, traffic_light: TrafficLight) -> Iterator[TrafficLight]:
+    def _traffic_lights_in_range(self, traffic_light: TrafficLight) -> Iterator[TrafficLight]:
         for tl in self.infrastructure.nodes(type_filter=TrafficLight):
-            distance = traffic_light.location.distance(tl.location)
-            if distance == BLOCK_SIZE_WIDTH or distance == BLOCK_SIZE_HEIGHT:
+            if traffic_light.location.distance(tl.location) <= WIFI_RANGE:
                 yield tl
 
     def _closest_traffic_light(self, taxi: Taxi) -> TrafficLight:

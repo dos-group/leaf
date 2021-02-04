@@ -121,7 +121,7 @@ class LinkWifiBetweenTrafficLights(Link):
         super().__init__(src, dst,
                          bandwidth=WIFI_BANDWIDTH,
                          latency=WIFI_LATENCY,
-                         power_model=PowerModelLink(WIFI_AP_TO_AP_WATT_PER_BIT))
+                         power_model=PowerModelLink(WIFI_TL_TO_TL_WATT_PER_BIT))
 
 
 class LinkWifiTaxiToTrafficLight(Link):
@@ -129,4 +129,4 @@ class LinkWifiTaxiToTrafficLight(Link):
         super().__init__(src, dst,
                          bandwidth=WIFI_BANDWIDTH,
                          latency=WIFI_LATENCY,
-                         power_model=PowerModelLink(WIFI_CAR_TO_AP_WATT_PER_BIT))
+                         power_model=PowerModelLink(WIFI_TAXI_TO_TL_WATT_PER_BIT))
