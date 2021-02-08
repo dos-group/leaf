@@ -33,7 +33,7 @@ How does it work?
 Unlike other discrete event simulators for computer networks, LEAF models infrastructure and applications on a high
 level based on graphs. The infrastructure graph consists of compute nodes
 such as data centers or sensors that are connected via network links. Applications are represented as
-`directed acyclic graphs (DAG) <https://en.wikipedia.org/wiki/Directed_acyclic_graph>`_, where tasks are connected via flows between.
+`directed acyclic graphs (DAG) <https://en.wikipedia.org/wiki/Directed_acyclic_graph>`_, where tasks are connected by their respective data flows.
 
 This allows for easy to configure and easy to analyze experiments that are fast to execute.
 
@@ -65,7 +65,7 @@ Examples for this are power meters that periodically measure the power usage of 
 LEAF allows you to model different kinds of algorithms, hardware (think of batteries that update their state of charge) and energy-saving mechanisms.
 LEAF is *no* suitable tool if you require a low-level modeling of packet traffic for simulating effects like network congestion.
 
-For a detailed explanation of the model, please read `our paper <[under review]>`_.
+For a detailed explanation of the model, please read our paper [#leaf]_.
 
 
 How do I use it?
@@ -77,7 +77,7 @@ To ease your start with LEAF, we provide some examples:
   a fog node and a sensor that execute a simple application. Play around with the different parameters to see how resource constraints and task placement strategies affect the simulation.
 - The `smart city traffic scenario <https://github.com/dos-group/leaf/blob/main/leaf/examples/simple/main.py>`_ is a lot more complicated.
   It simulates the traffic of taxis and the execution of two different kinds of applications in a connected city center.
-  You can read up on the setup and results of this scenario in `this paper <[under review]>`_.
+  You can read up on the setup and results of this scenario in our paper.
 
 
 Publications
@@ -85,7 +85,7 @@ Publications
 
 The paper behind LEAF is currently under review:
 
-- Philipp Wiesner and Lauritz Thamsen. "LEAF: Simulating Large Energy-Aware Fog Computing Environments" [under review]
+.. [#leaf] Philipp Wiesner and Lauritz Thamsen. "LEAF: Simulating Large Energy-Aware Fog Computing Environments" [under review]
 
 
 .. toctree::
