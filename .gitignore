@@ -1,3 +1,6 @@
+# Project
+**/results/**/*.csv
+
 # Poetry
 poetry.lock
 

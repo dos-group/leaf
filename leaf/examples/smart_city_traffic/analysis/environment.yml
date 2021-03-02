@@ -1,0 +1,16 @@
+name: leaf_analysis
+channels:
+  - defaults
+  - conda-forge
+  - plotly
+dependencies:
+  - python=3.8
+  - pandas
+  - numpy
+  - scipy
+  - plotly
+
+  # Required by plotly for exporting PDFs (https://plotly.com/python/static-image-export/)
+  - plotly-orca=1.2.1
+  - psutil
+  - requests
