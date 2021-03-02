@@ -4,17 +4,15 @@ LEAF is a simulator for **L**arge **E**nergy-**A**ware **F**og computing environ
 It enables then modeling of complex application graphs in distributed, heterogeneous, and resource-constrained infrastructures.
 A special emphasis was put on the modeling of energy consumption (and soon carbon emissions).
 
+Please visit the official [documentation](https://leaf.readthedocs.io) for more information and examples on this project.
+
+
 <p align="center">
   <img src="/docs/_static/infrastructure.png">
 </p>
 
 This Python implementation was ported from the [original Java protoype](https://www.github.com/birnbaum/leaf).
 All future development will take place in this repository.
-
-
-## Documentation
-
-Please visit the official [documentation](https://leaf.readthedocs.io) for more information and examples on this project.
 
 
 ## Installation
@@ -39,7 +37,8 @@ LEAF puts a special focus on:
 - **Energy-aware algorithms**: Implement dynamically adapting task placement strategies, routing policies, and other energy-saving mechanisms.
 - **Scalability**: Model the execution of thousands of compute nodes and applications in magnitudes faster than real time.
 
-Please visit the [documentation](https://leaf.readthedocs.io) for more information and examples on this project.
+Please visit the official [documentation](https://leaf.readthedocs.io) for more information and examples on this project.
+
 
 ## Publications
 

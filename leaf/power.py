@@ -214,7 +214,7 @@ class PowerMeter:
         yield self.env.timeout(self.delay)
         while self.env.now < self.end_time:
             if isinstance(self.entities, PowerAware):
-                measurement = self.measurements.append(self.entities.measure_power())
+                measurement = self.entities.measure_power()
             else:
                 if isinstance(self.entities, Collection):
                     entities = self.entities
