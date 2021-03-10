@@ -30,7 +30,7 @@ class PowerMeasurement:
         return f"PowerMeasurement(dynamic={self.dynamic}W, static={self.static}W)"
 
     def __float__(self) -> float:
-        return self.dynamic + self.static
+        return float(self.dynamic + self.static)
 
     def __add__(self, other):
         return PowerMeasurement(self.dynamic + other.dynamic, self.static + other.static)

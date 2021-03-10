@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "leafsim"
-version = "0.1.1"
+version = "0.1.2"
 description = "A simulator for Large Energy-Aware Fog computing environments."
 authors = ["Philipp Wiesner <wiesner@tu-berlin.de>"]
 license = "MIT"
