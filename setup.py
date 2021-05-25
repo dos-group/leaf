@@ -13,6 +13,7 @@ if __name__ == "__main__":
         author_email="wiesner@tu-berlin.de",
         description="Simulator for modeling energy consumption in cloud, fog, and edge computing environments",
         long_description=long_description,
+        long_description_content_type='text/markdown',
         keywords=["simulation", "modeling", "fog computing", "energy consumption", "edge computing"],
         url="https://github.com/dos-group/leaf",
         project_urls={
@@ -25,8 +26,8 @@ if __name__ == "__main__":
         setup_requires=['setuptools_scm'],
         install_requires=[
             'networkx~=2.5',
-            'numpy~=1.20',
-            'pandas~=1.2',
+            'numpy~=1.19',
+            'pandas~=1.1',
             'simpy~=4.0',
             'tqdm~=4.0',
         ],
