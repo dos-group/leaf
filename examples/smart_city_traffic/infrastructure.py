@@ -3,7 +3,7 @@ from typing import List
 import simpy
 
 from leaf.application import Application, SourceTask, ProcessingTask, SinkTask
-from leaf.examples.smart_city_traffic.settings import *
+from examples.smart_city_traffic.settings import *
 from leaf.infrastructure import Link, Node
 from leaf.power import PowerModelLink, PowerModelNode, PowerModelNodeShared, PowerMeasurement
 
