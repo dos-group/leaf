@@ -13,6 +13,7 @@ if __name__ == "__main__":
         author_email="wiesner@tu-berlin.de",
         description="Simulator for modeling energy consumption in cloud, fog, and edge computing environments",
         long_description=long_description,
+        long_description_content_type='text/markdown',
         keywords=["simulation", "modeling", "fog computing", "energy consumption", "edge computing"],
         url="https://github.com/dos-group/leaf",
         project_urls={
