@@ -1,8 +1,8 @@
 import math
 
 from leaf.application import Application, ProcessingTask
-from leaf.examples.smart_city_traffic.infrastructure import FogNode, Cloud
-from leaf.examples.smart_city_traffic.settings import FOG_UTILIZATION_THRESHOLD, FOG_DCS, FOG_IDLE_SHUTDOWN
+from examples.smart_city_traffic.infrastructure import FogNode, Cloud
+from examples.smart_city_traffic.settings import FOG_UTILIZATION_THRESHOLD, FOG_DCS, FOG_IDLE_SHUTDOWN
 from leaf.infrastructure import Infrastructure, Node
 from leaf.orchestrator import Orchestrator
 

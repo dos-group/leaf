@@ -4,11 +4,11 @@ from os import makedirs
 import simpy
 from tqdm import tqdm
 
-from leaf.examples.smart_city_traffic.city import City
-from leaf.examples.smart_city_traffic.infrastructure import Cloud, FogNode, Taxi, LinkWanDown, LinkWanUp, \
+from examples.smart_city_traffic.city import City
+from examples.smart_city_traffic.infrastructure import Cloud, FogNode, Taxi, LinkWanDown, LinkWanUp, \
     LinkWifiTaxiToTrafficLight, LinkWifiBetweenTrafficLights, TrafficLight
-from leaf.examples.smart_city_traffic.mobility import MobilityManager
-from leaf.examples.smart_city_traffic.settings import SIMULATION_TIME, FOG_DCS, POWER_MEASUREMENT_INTERVAL, \
+from examples.smart_city_traffic.mobility import MobilityManager
+from examples.smart_city_traffic.settings import SIMULATION_TIME, FOG_DCS, POWER_MEASUREMENT_INTERVAL, \
     FOG_IDLE_SHUTDOWN
 from leaf.infrastructure import Infrastructure
 from leaf.power import PowerMeter
