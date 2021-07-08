@@ -6,7 +6,6 @@ A special emphasis was put on the modeling of energy consumption (and soon carbo
 
 Please visit the official [documentation](https://leaf.readthedocs.io) for more information and examples on this project.
 
-
 <p align="center">
   <img src="/docs/_static/infrastructure.png">
 </p>
@@ -42,5 +41,4 @@ Please visit the official [documentation](https://leaf.readthedocs.io) for more 
 
 ## Publications
 
-The paper behind LEAF is accepted for publication:
-- Philipp Wiesner and Lauritz Thamsen. "[LEAF: Simulating Large Energy-Aware Fog Computing Environments](https://arxiv.org/abs/2103.01170)" To appear in the Proceedings of the *5th IEEE International Conference on Fog and Edge Computing (ICFEC)*. IEEE, 2021.
+- Philipp Wiesner and Lauritz Thamsen. "[LEAF: Simulating Large Energy-Aware Fog Computing Environments](https://ieeexplore.ieee.org/document/9458907)" In the Proceedings of the 2021 *5th IEEE International Conference on Fog and Edge Computing (ICFEC)*, IEEE, 2021. [[arXiv preprint]](https://arxiv.org/pdf/2103.01170.pdf) [[video]](https://youtu.be/G70hudAhd5M)

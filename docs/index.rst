@@ -83,9 +83,7 @@ To ease your start with LEAF, we provide some examples:
 Publications
 ------------
 
-The paper behind LEAF is accepted for publication:
-
-.. [#leaf] Philipp Wiesner and Lauritz Thamsen. "`LEAF: Simulating Large Energy-Aware Fog Computing Environments <https://arxiv.org/abs/2103.01170>`_" To appear in the Proceedings of the *5th IEEE International Conference on Fog and Edge Computing (ICFEC)*. IEEE, 2021.
+.. [#leaf] Philipp Wiesner and Lauritz Thamsen. "`LEAF: Simulating Large Energy-Aware Fog Computing Environments <https://ieeexplore.ieee.org/document/9458907>`_" In the Proceedings of the 2021 *5th IEEE International Conference on Fog and Edge Computing (ICFEC)*. IEEE. 2021. `[arXiv preprint] <https://arxiv.org/pdf/2103.01170.pdf>`_ `[video] <https://youtu.be/G70hudAhd5M>`_
 
 
 .. toctree::
