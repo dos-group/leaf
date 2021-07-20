@@ -41,4 +41,16 @@ Please visit the official [documentation](https://leaf.readthedocs.io) for more 
 
 ## Publications
 
-- Philipp Wiesner and Lauritz Thamsen. "[LEAF: Simulating Large Energy-Aware Fog Computing Environments](https://ieeexplore.ieee.org/document/9458907)" In the Proceedings of the 2021 *5th IEEE International Conference on Fog and Edge Computing (ICFEC)*, IEEE, 2021. [[arXiv preprint]](https://arxiv.org/pdf/2103.01170.pdf) [[video]](https://youtu.be/G70hudAhd5M)
+Philipp Wiesner and Lauritz Thamsen. "[LEAF: Simulating Large Energy-Aware Fog Computing Environments](https://ieeexplore.ieee.org/document/9458907)" In the Proceedings of the 2021 *5th IEEE International Conference on Fog and Edge Computing (ICFEC)*, IEEE, 2021. [[arXiv preprint]](https://arxiv.org/pdf/2103.01170.pdf) [[video]](https://youtu.be/G70hudAhd5M)
+
+Cite as:
+```
+@inproceedings{WiesnerThamsen_LEAF_2021,
+  author={Wiesner, Philipp and Thamsen, Lauritz},
+  booktitle={2021 IEEE 5th International Conference on Fog and Edge Computing (ICFEC)}, 
+  title={{LEAF}: Simulating Large Energy-Aware Fog Computing Environments}, 
+  year={2021},
+  pages={29-36},
+  doi={10.1109/ICFEC51620.2021.00012}
+}
+```
