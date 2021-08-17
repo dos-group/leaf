@@ -12,8 +12,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(levelname)s\t%(message)s')
 def main():
     """Simple example that adds and removes a task from a single node
 
-    Examples:
-        >>> main()
+    Log Output:
         DEBUG	0: SensorPowerMeter: PowerMeasurement(dynamic=0.0W, static=1W)
         DEBUG	1: SensorPowerMeter: PowerMeasurement(dynamic=0.0W, static=1W)
         DEBUG	2: SensorPowerMeter: PowerMeasurement(dynamic=0.0W, static=1W)
