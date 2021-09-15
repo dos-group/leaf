@@ -1,11 +1,3 @@
-from abc import ABC, abstractmethod
-from functools import partial
-from typing import Callable, List
-
-import networkx as nx
-#ProcessingTaskPlacement = Callable[[ProcessingTask, Application, Infrastructure], Node]
-DataFlowPath = Callable[[nx.Graph, str, str], List[str]]
-
 import logging
 import random
 import simpy
@@ -23,14 +15,19 @@ logging.basicConfig(level=logging.DEBUG, format='%(levelname)s\t%(message)s')
 
 def simple_example():
     """Simple example without any behaviour over time.
+
     Read the explanations of :func:`create_infrastructure`, :func:`create_application` and :class:`SimpleOrchestrator`
     for details on the scenario setup.
+
     The PowerMeters can be configured to periodically measure the power consumption of one or more PowerAware entities
     such as applications, tasks, data flows, compute nodes, network links or the entire infrastructure.
+
     The scenario is running for 5 time steps.
     """
     infrastructure = create_infrastructure()
     application = create_application(source_node=infrastructure.node("sensor"), sink_node=infrastructure.node("cloud"))
+    orchestrator = SimpleOrchestrator(infrastructure)
+    orchestrator.place(application)
 
     env = simpy.Environment()
     PowerMeter(env, name="application_meter", entities=application, delay=0.5, end_time=3)
@@ -41,11 +38,13 @@ def simple_example():
 
 def create_infrastructure():
     """Create the scenario's infrastructure graph.
+
     It consists of three nodes:
     - A sensor that can compute up to 1000 million instructions per second (MIPS).
         It has a maximum power usage of 1.8 Watt and a power usage of 0.2 Watt when being idle.
     - A fog node which can compute up to 400000 MIPS; 200 Watt max and 30 Watt static power usage
     - A node representing a cloud data center with unlimited processing power that consumes 700 W/MIPS
+
     And two network links that connect the nodes:
     - A WiFi connection between the sensor and fog node that consumes 300 J/bit
     - A wide are network (WAN) connection between the fog node and cloud that consumes 6000 J/bit
@@ -64,6 +63,7 @@ def create_infrastructure():
 
 def create_application(source_node: Node, sink_node: Node):
     """Create the application running in the scenario.
+
     It consists of three tasks and two data flows between these tasks:
     - A source task that is bound to the sensor node and requires 100 MIPS (for measuring data)
     - A processing task that receives 1000 bit/s from the source task, requires 5000 MIPS (for aggregating the data)
@@ -83,26 +83,15 @@ def create_application(source_node: Node, sink_node: Node):
     return application
 
 
-def place(application: Application):
-    """Place an application on the infrastructure."""
-    logger.info(f"Placing {application}:")
-    for task in application.tasks():
-        if isinstance(task, (SourceTask, SinkTask)):
-            node = task.bound_node
-        elif isinstance(task, ProcessingTask):
-            node = task.infrastructure.node("fog")
-        else:
-            raise TypeError(f"Unknown task type {task}")
-        logger.info(f"- {task} on {node}.")
-        task.allocate(node)
+class SimpleOrchestrator(Orchestrator):
+    """Very simple orchestrator that places the processing task on the fog node.
 
-    for src_task_id, dst_task_id, data_flow in application.graph.edges.data("data"):
-        src_task = application.graph.nodes[src_task_id]["data"]
-        dst_task = application.graph.nodes[dst_task_id]["data"]
-        shortest_path = shortest_path(infrastructure.graph, src_task.node.name, dst_task.node.name)
-        links = [infrastructure.graph.edges[a, b, 0]["data"] for a, b in nx.utils.pairwise(shortest_path)]
-        logger.info(f"- {data_flow} on {links}.")
-        data_flow.allocate(links)
+    You can try out other placements here and see how the placement may consume more energy ("cloud")
+    or fail because there are not enough resources available ("sensor").
+    """
+
+    def _processing_task_placement(self, processing_task: ProcessingTask, application: Application) -> Node:
+        return self.infrastructure.node("fog")
 
 
 if __name__ == '__main__':
