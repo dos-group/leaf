@@ -23,5 +23,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install .
-    - name: Run simple example
-      run: python examples/simple/main.py
+    - name: Run example 1
+      run: python examples/1_single_node.py
+    - name: Run example 2
+      run: python examples/2_application_placement.py
