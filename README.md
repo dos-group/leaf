@@ -63,3 +63,8 @@ Cite as:
   doi={10.1109/ICFEC51620.2021.00012}
 }
 ```
+
+Projects using LEAF:
+
+- Philipp Wiesner, Ilja Behnke, Dominik Scheinert,  Kordian Gontarska, and Lauritz Thamsen. "[Let's Wait Awhile: How Temporal Workload Shifting Can Reduce Carbon Emissions in the Cloud](https://arxiv.org/pdf/2110.13234.pdf)" In the Proceedings of the *22nd International Middleware Conference*, ACM, 2021. [[code](https://github.com/dos-group/lets-wait-awhile)]
+
