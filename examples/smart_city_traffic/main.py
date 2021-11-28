@@ -11,7 +11,7 @@ from examples.smart_city_traffic.mobility import MobilityManager
 from examples.smart_city_traffic.settings import SIMULATION_TIME, FOG_DCS, POWER_MEASUREMENT_INTERVAL, \
     FOG_IDLE_SHUTDOWN
 from leaf.infrastructure import Infrastructure
-from leaf.power import PowerMeter
+from leaf.power import power_meter
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.WARN, format='%(levelname)s: %(message)s')
@@ -70,9 +70,11 @@ def main(count_taxis: bool, measure_infrastructure: bool, measure_applications: 
             csvfile.write(csv_content)
 
 
-class _PowerMeter(PowerMeter):
+class _PowerMeter:
     def __init__(self, env, entities, **kwargs):
-        super().__init__(env, entities, measurement_interval=POWER_MEASUREMENT_INTERVAL, **kwargs)
+        self.measurements = []
+        env.process(power_meter(env, entities, measurement_interval=POWER_MEASUREMENT_INTERVAL,
+                                callback=lambda m: self.measurements.append(m), **kwargs))
 
 
 class TaxiCounter:

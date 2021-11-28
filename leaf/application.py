@@ -7,9 +7,11 @@ from leaf.infrastructure import Node, Link
 from leaf.power import PowerAware, PowerMeasurement
 
 
-class Task(PowerAware, ABC):
+class Task(PowerAware):
     def __init__(self, mips: float):
-        """Task within an :class:`Application`, i.e. a node in the application DAG.
+        """Task that can be placed on a :class:`Node`.
+
+        Tasks _can_ be connected via :class:`Link`s to build an :class:`Application`.
 
         Args:
             mips: Million instructions per second required to execute the task.
@@ -26,13 +28,13 @@ class Task(PowerAware, ABC):
         if self.node is not None:
             raise ValueError(f"Cannot place {self} on {node}: It was already placed on {self.node}.")
         self.node = node
-        node.add_task(self)
+        self.node._add_task(self)
 
     def deallocate(self):
         """Detache the task from the node it is currently placed on and deallocate resources."""
         if self.node is None:
             raise ValueError(f"{self} is not placed on any node.")
-        self.node.remove_task(self)
+        self.node._remove_task(self)
         self.node = None
 
     def measure_power(self) -> PowerMeasurement:
@@ -103,17 +105,19 @@ class DataFlow(PowerAware):
             raise ValueError(f"Cannot place {self} on {links}: It was already placed on path {self.links}.")
         self.links = links
         for link in self.links:
-            link.add_data_flow(self)
+            link._add_data_flow(self)
 
     def deallocate(self):
         """Remove the data flow from the infrastructure and deallocate bandwidth."""
         if self.links is None:
             raise ValueError(f"{self} is not placed on any link.")
         for link in self.links:
-            link.remove_data_flow(self)
+            link._remove_data_flow(self)
         self.links = None
 
     def measure_power(self) -> PowerMeasurement:
+        if self.links is None:
+            raise RuntimeError("Cannot measure power: DataFlow was not placed on any links.")
         return PowerMeasurement.sum(link.measure_power().multiply(self.bit_rate / link.used_bandwidth)
                                     for link in self.links)
 

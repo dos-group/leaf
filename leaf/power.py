@@ -53,6 +53,7 @@ class PowerMeasurement:
 
 class PowerModel(ABC):
     """Abstract base class for power models."""
+
     # TODO: Validator! Only one power model per entity
 
     @abstractmethod
@@ -173,60 +174,49 @@ class PowerAware(ABC):
 
 
 class PowerMeter:
-    def __init__(self,
-                 env: simpy.Environment,
-                 entities: Union[PowerAware, Collection[PowerAware], Callable[[], Collection[PowerAware]]],
-                 name: Optional[str] = None,
-                 measurement_interval: Optional[float] = 1,
-                 delay: Optional[float] = 0,
-                 end_time: Optional[float] = math.inf):
-        """PowerMeter with measures and saves the power of one or more entites in regular intervals.
+    """Convenience class that wraps power_meter()."""
+    def __init__(self, env, entities, **kwargs):
+        self.measurements = []
+        env.process(power_meter(env, entities, callback=lambda m: self.measurements.append(m), **kwargs))
 
-        Args:
-            env: Simpy environment (for timing the measurements)
-            entities: Can be either (1) a single :class:`PowerAware` entity (2) a list of :class:`PowerAware` entities
-                (3) a function which returns a list of :class:`PowerAware` entities, if the number of these entities
-                changes during the simulation.
-            name: Name of the power meter for logging and reporting
-            measurement_interval: The measurement interval.
-            delay: The delay after which the measurements shall be conducted. For some scenarios it makes sense to e.g.
-                include a tiny delay to make sure that all events at a previous time step were processed before the
-                measurement is conducted.
-            end_time: No measurements will be conducted after this time
-        """
-        self.env = env
-        self.entities = entities
-        self.measurement_interval = measurement_interval
-        self.delay = delay
-        self.end_time = end_time
-        self.measurements: List[PowerMeasurement] = []
 
-        if name is not None:
-            self.name = name
+def power_meter(env: simpy.Environment,
+                entities: Union[PowerAware, Collection[PowerAware], Callable[[], Collection[PowerAware]]],
+                callback: Callable[[PowerMeasurement], None],
+                name: Optional[str] = None,
+                measurement_interval: Optional[float] = 1,
+                delay: Optional[float] = 0):
+    """Power meter with measures and saves the power of one or more entites in regular intervals.
+
+    Args:
+        env: Simpy environment (for timing the measurements)
+        entities: Can be either (1) a single :class:`PowerAware` entity (2) a list of :class:`PowerAware` entities
+            (3) a function which returns a list of :class:`PowerAware` entities, if the number of these entities
+            changes during the simulation.
+        callback: TODO
+        name: Name of the power meter for logging and reporting
+        measurement_interval: The measurement interval.
+        delay: The delay after which the measurements shall be conducted. For some scenarios it makes sense to e.g.
+            include a tiny delay to make sure that all events at a previous time step were processed before the
+            measurement is conducted.
+    """
+    if name is None:
+        global _unnamed_power_meters_created
+        name = f"power_meter_{_unnamed_power_meters_created}"
+        _unnamed_power_meters_created += 1
+
+    yield env.timeout(delay)
+    while True:
+        if isinstance(entities, PowerAware):
+            measurement = entities.measure_power()
         else:
-            global _unnamed_power_meters_created
-            self.name = f"power_meter_{_unnamed_power_meters_created}"
-            _unnamed_power_meters_created += 1
-
-        self.process = env.process(self._run())
-
-    def _run(self):
-        yield self.env.timeout(self.delay)
-        while self.env.now < self.end_time:
-            if isinstance(self.entities, PowerAware):
-                measurement = self.entities.measure_power()
+            if isinstance(entities, Collection):
+                entities = entities
+            elif isinstance(entities, Callable):
+                entities = entities()
             else:
-                if isinstance(self.entities, Collection):
-                    entities = self.entities
-                elif isinstance(self.entities, Callable):
-                    entities = self.entities()
-                else:
-                    raise ValueError(f"{self.name}: Unsupported type {type(self.entities)} for observable={self.entities}.")
-                measurement = PowerMeasurement.sum(entity.measure_power() for entity in entities)
-            self.measurements.append(measurement)
-            logger.debug(f"{self.env.now}: {self.name}: {measurement}")
-            yield self.env.timeout(self.measurement_interval)
-
-    def stop(self):
-        """Stop the power meter from conducting further measurements."""
-        self.end_time = self.env.now
+                raise ValueError(f"{name}: Unsupported type {type(entities)} for observable={entities}.")
+            measurement = PowerMeasurement.sum(entity.measure_power() for entity in entities)
+        callback(measurement)
+        logger.debug(f"{env.now}: {name}: {measurement}")
+        yield env.timeout(measurement_interval)

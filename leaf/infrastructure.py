@@ -7,7 +7,9 @@ from leaf.power import PowerAware, PowerMeasurement
 
 
 class Node(PowerAware):
-    def __init__(self, name: str, mips: Optional[float] = None, power_model: Optional["PowerModel"] = None):
+    def __init__(self, name: str,
+                 mips: Optional[float] = None,
+                 power_model: Optional["PowerModel"] = None):
         """A compute node in the infrastructure graph.
 
         This can represent any kind of node, e.g.
@@ -46,13 +48,19 @@ class Node(PowerAware):
             assert self.used_mips == 0
             return 0
 
-    def add_task(self, task: "Task"):
-        """Add a task to the node."""
+    def _add_task(self, task: "Task"):
+        """Add a task to the node.
+
+        Private as this is only called by leaf.application.Task and not part of the public interface.
+        """
         self._reserve_mips(task.mips)
         self.tasks.append(task)
 
-    def remove_task(self, task: "Task"):
-        """Remove a task from the node."""
+    def _remove_task(self, task: "Task"):
+        """Remove a task from the node.
+
+        Private as this is only called by leaf.application.Task and not part of the public interface.
+        """
         self._release_mips(task.mips)
         self.tasks.remove(task)
 
@@ -106,13 +114,19 @@ class Link(PowerAware):
         latency_repr = f", latency={self.latency}" if self.latency else ""
         return f"{self.__class__.__name__}('{self.src.name}' -> '{self.dst.name}', bandwidth={self.used_bandwidth}/{self.bandwidth}{latency_repr})"
 
-    def add_data_flow(self, data_flow: "DataFlow"):
-        """Add a data flow to the link."""
+    def _add_data_flow(self, data_flow: "DataFlow"):
+        """Add a data flow to the link.
+
+        Private as this is only called by leaf.application.DataFlow and not part of the public interface.
+        """
         self._reserve_bandwidth(data_flow.bit_rate)
         self.data_flows.append(data_flow)
 
-    def remove_data_flow(self, data_flow: "DataFlow"):
-        """Remove a data flow from the link."""
+    def _remove_data_flow(self, data_flow: "DataFlow"):
+        """Remove a data flow from the link.
+
+        Private as this is only called by leaf.application.DataFlow and not part of the public interface.
+        """
         self._release_bandwidth(data_flow.bit_rate)
         self.data_flows.remove(data_flow)
 

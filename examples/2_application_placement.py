@@ -5,7 +5,7 @@ import simpy
 from leaf.application import Application, SourceTask, ProcessingTask, SinkTask
 from leaf.infrastructure import Node, Link, Infrastructure
 from leaf.orchestrator import Orchestrator
-from leaf.power import PowerModelNode, PowerModelNodeShared, PowerModelLink, PowerMeter
+from leaf.power import PowerModelNode, PowerModelNodeShared, PowerModelLink, power_meter
 
 RANDOM_SEED = 1
 
@@ -13,26 +13,54 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, format='%(levelname)s\t%(message)s')
 
 
-def simple_example():
-    """Simple example without any behaviour over time.
+def main():
+    """Simple example that places an application in the beginning an performs power measurements on different entities.
 
     Read the explanations of :func:`create_infrastructure`, :func:`create_application` and :class:`SimpleOrchestrator`
     for details on the scenario setup.
 
-    The PowerMeters can be configured to periodically measure the power consumption of one or more PowerAware entities
+    The power meters can be configured to periodically measure the power consumption of one or more PowerAware entities
     such as applications, tasks, data flows, compute nodes, network links or the entire infrastructure.
 
     The scenario is running for 5 time steps.
+
+    Log Output:
+        INFO	Placing Application(tasks=3):
+        INFO	- SourceTask(id=0, mips=100) on Node('sensor', mips=0/1000).
+        INFO	- ProcessingTask(id=1, mips=5000) on Node('fog', mips=0/400000).
+        INFO	- SinkTask(id=2, mips=100) on Node('cloud', mips=0/inf).
+        INFO	- DataFlow(bit_rate=1000) on [Link('sensor' -> 'fog', bandwidth=0/30000000.0, latency=10)].
+        INFO	- DataFlow(bit_rate=200) on [Link('fog' -> 'cloud', bandwidth=0/1000000000.0, latency=5)].
+        DEBUG	0: cloud_and_fog_meter: PowerMeasurement(dynamic=70002.125W, static=30W)
+        DEBUG	0: infrastructure_meter: PowerMeasurement(dynamic=1570002.2850000001W, static=30.2W)
+        DEBUG	0.5: application_meter: PowerMeasurement(dynamic=1570002.2850000001W, static=30.2W)
+        DEBUG	1: cloud_and_fog_meter: PowerMeasurement(dynamic=70002.125W, static=30W)
+        DEBUG	1.5: application_meter: PowerMeasurement(dynamic=1570002.2850000001W, static=30.2W)
+        DEBUG	2: infrastructure_meter: PowerMeasurement(dynamic=1570002.2850000001W, static=30.2W)
+        DEBUG	2: cloud_and_fog_meter: PowerMeasurement(dynamic=70002.125W, static=30W)
+        DEBUG	2.5: application_meter: PowerMeasurement(dynamic=1570002.2850000001W, static=30.2W)
+        DEBUG	3: cloud_and_fog_meter: PowerMeasurement(dynamic=70002.125W, static=30W)
+        DEBUG	3.5: application_meter: PowerMeasurement(dynamic=1570002.2850000001W, static=30.2W)
+        DEBUG	4: infrastructure_meter: PowerMeasurement(dynamic=1570002.2850000001W, static=30.2W)
+        DEBUG	4: cloud_and_fog_meter: PowerMeasurement(dynamic=70002.125W, static=30W)
+        DEBUG	4.5: application_meter: PowerMeasurement(dynamic=1570002.2850000001W, static=30.2W)
     """
     infrastructure = create_infrastructure()
     application = create_application(source_node=infrastructure.node("sensor"), sink_node=infrastructure.node("cloud"))
     orchestrator = SimpleOrchestrator(infrastructure)
     orchestrator.place(application)
 
+    application_measurements = []
+    cloud_and_fog_measurements = []
+    infrastructure_measurements = []
+
     env = simpy.Environment()
-    PowerMeter(env, name="application_meter", entities=application, delay=0.5, end_time=3)
-    PowerMeter(env, name="cloud_and_fog_meter", entities=[infrastructure.node("cloud"), infrastructure.node("fog")])
-    PowerMeter(env, name="infrastructure_meter", entities=infrastructure, measurement_interval=2)
+    env.process(power_meter(env, application, name="application_meter", delay=0.5,
+                            callback=lambda m: application_measurements.append(m)))
+    env.process(power_meter(env, [infrastructure.node("cloud"), infrastructure.node("fog")], name="cloud_and_fog_meter",
+                            callback=lambda m: cloud_and_fog_measurements.append(m)))
+    env.process(power_meter(env, infrastructure, name="infrastructure_meter", measurement_interval=2,
+                            callback=lambda m: infrastructure_measurements.append(m)))
     env.run(until=5)
 
 
@@ -96,4 +124,4 @@ class SimpleOrchestrator(Orchestrator):
 
 if __name__ == '__main__':
     random.seed(RANDOM_SEED)
-    simple_example()
+    main()
