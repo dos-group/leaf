@@ -2,9 +2,9 @@
 
 <img align="right" width="300" height="230" src="https://leaf.readthedocs.io/en/latest/_static/logo.svg">
 
-LEAF is a simulator for **L**arge **E**nergy-**A**ware **F**og computing environments.
-It enables the modeling of simple tasks and complex application graphs in distributed, heterogeneous, and resource-constrained infrastructures.
-A special emphasis was put on the modeling of energy consumption (and soon carbon emissions).
+LEAF is a simulator for analytical modeling of energy consumption in cloud, fog, or edge computing environments.
+It enables the modeling of simple tasks running on a single node as well as complex application graphs in distributed, heterogeneous, and resource-constrained infrastructures.
+LEAF is based on [SimPy](https://simpy.readthedocs.io/en/latest/) for discrete-event simulation and [NetworkX](https://networkx.org/) for modeling infrastructure or application graphs.
 
 Please have a look at out [examples](https://github.com/dos-group/leaf/tree/main/examples) and visit the official [documentation](https://leaf.readthedocs.io) for more information on this project.
 
@@ -12,32 +12,70 @@ This Python implementation was ported from the [original Java protoype](https://
 All future development will take place in this repository.
 
 
-## Installation
+## ⚙️ Installation
 
-You can use LEAF by installing the [latest release](https://pypi.org/project/leafsim/) via [pip](https://pip.pypa.io/en/stable/quickstart/):
+You can install the [latest release](https://pypi.org/project/leafsim/) of LEAF via [pip](https://pip.pypa.io/en/stable/quickstart/):
 
 ```
 $ pip install leafsim
 ```
 
-For the latest changes and development we recommend cloning the repository and setting up your environment via:
+Alternatively, you can also clone the repository (including all examples) and set up your environment via:
 
 ```
 $ pip install -e .
 ```
 
 
-## What can I do with it?
+## 🚀 Getting started
 
-LEAF enables a high-level modeling of cloud, fog and edge computing environments.
-It builds on top of [networkx](https://networkx.org/), a library for creating and manipulating complex networks,
-and [SimPy](https://simpy.readthedocs.io/en/latest/), a process-based discrete-event simulation framework.
+LEAF uses [SimPy](https://simpy.readthedocs.io/en/latest/) for process-based discrete-event simulation and adheres to their API.
+To understand how to develop scenarios in LEAF, it makes sense to familiarize yourself with SimPy first.
 
-Besides allowing research on scheduling and placement algorithms on resource-constrained environments,
-LEAF puts a special focus on:
+```python
+import simpy
+from leaf.application import Task
+from leaf.infrastructure import Node
+from leaf.power import PowerModelNode, power_meter
+
+# Processes modify the model during the simulation
+def place_task_after_2_seconds(env, node, task):
+    """Waits for 2 seconds and places a task on a node."""
+    yield env.timeout(2)
+    task.allocate(node)
+
+node = Node("node1", mips=100, power_model=PowerModelNode(max_power=30, static_power=10))
+task = Task(mips=100)
+
+env = simpy.Environment()  
+# register our task placement process
+env.process(place_task_after_2_seconds(env, node, task))
+# register power metering process (provided by LEAF)
+env.process(power_meter(env, node, 
+    callback=lambda m: print(f"{env.now}: Node consumes {int(m)}W")))
+env.run(until=5)
+```
+
+Which will result in the output:
+
+```
+0: Node consumes 10W
+1: Node consumes 10W
+2: Node consumes 30W
+3: Node consumes 30W
+4: Node consumes 30W
+```
+
+For other examples, please refer to the [examples folder](https://github.com/dos-group/leaf/blob/main/examples).
+
+
+## 🍃 What can I do with LEAF?
+
+LEAF enables high-level simulation of computing scenarios, where experiments are easy to create and easy to analyze.
+Besides allowing research on scheduling and placement algorithms on resource-constrained environments, LEAF puts a special focus on:
 
 - **Dynamic networks**: Simulate mobile nodes which can join or leave the network during the simulation.
-- **Power consumption modeling**: Model the power usage of individual compute nodes, network traffic and applications.
+- **Power consumption modeling**: Model the power usage of individual compute nodes, network traffic, and applications.
 - **Energy-aware algorithms**: Implement dynamically adapting task placement strategies, routing policies, and other energy-saving mechanisms.
 - **Scalability**: Model the execution of thousands of compute nodes and applications in magnitudes faster than real time.
 
@@ -48,11 +86,13 @@ Please visit the official [documentation](https://leaf.readthedocs.io) for more 
 </p>
 
 
-## Publications
+## 📖 Publications
 
-Philipp Wiesner and Lauritz Thamsen. "[LEAF: Simulating Large Energy-Aware Fog Computing Environments](https://ieeexplore.ieee.org/document/9458907)" In the Proceedings of the 2021 *5th IEEE International Conference on Fog and Edge Computing (ICFEC)*, IEEE, 2021. [[arXiv preprint]](https://arxiv.org/pdf/2103.01170.pdf) [[video]](https://youtu.be/G70hudAhd5M)
+If you use LEAF in your research, please cite our paper:
 
-Cite as:
+Philipp Wiesner and Lauritz Thamsen. "[LEAF: Simulating Large Energy-Aware Fog Computing Environments](https://ieeexplore.ieee.org/document/9458907)" In the Proceedings of the 2021 *5th IEEE International Conference on Fog and Edge Computing (ICFEC)*. IEEE. 2021 [[arXiv preprint]](https://arxiv.org/pdf/2103.01170.pdf) [[video]](https://youtu.be/G70hudAhd5M)
+
+Bibtex:
 ```
 @inproceedings{WiesnerThamsen_LEAF_2021,
   author={Wiesner, Philipp and Thamsen, Lauritz},
@@ -64,7 +104,7 @@ Cite as:
 }
 ```
 
-Projects using LEAF:
+## 💚 Projects using LEAF
 
-- Philipp Wiesner, Ilja Behnke, Dominik Scheinert,  Kordian Gontarska, and Lauritz Thamsen. "[Let's Wait Awhile: How Temporal Workload Shifting Can Reduce Carbon Emissions in the Cloud](https://arxiv.org/pdf/2110.13234.pdf)" In the Proceedings of the *22nd International Middleware Conference*, ACM, 2021. [[code](https://github.com/dos-group/lets-wait-awhile)]
-
+- Philipp Wiesner, Ilja Behnke, Dominik Scheinert,  Kordian Gontarska, and Lauritz Thamsen. "[Let's Wait Awhile: How Temporal Workload Shifting Can Reduce Carbon Emissions in the Cloud](https://arxiv.org/pdf/2110.13234.pdf)" In the Proceedings of the *22nd International Middleware Conference*. ACM. 2021 [[code](https://github.com/dos-group/lets-wait-awhile)]
+- Liam Brugger. "An Evaluation of Carbon-Aware Load Shifting Techniques" *Bachelor Thesis*. 2021 [[code](https://gitlab.com/lbrugger72/Bachelor)]
