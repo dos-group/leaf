@@ -32,6 +32,9 @@ class PowerMeasurement:
     def __float__(self) -> float:
         return float(self.dynamic + self.static)
 
+    def __int__(self) -> float:
+        return int(self.dynamic + self.static)
+
     def __add__(self, other):
         return PowerMeasurement(self.dynamic + other.dynamic, self.static + other.static)
 
@@ -69,7 +72,7 @@ class PowerModel(ABC):
 
 
 class PowerModelNode(PowerModel):
-    def __init__(self, max_power: float, static_power: float):
+    def __init__(self, max_power: float = None, power_per_mips: float = None, static_power: float = 0):
         """Power model for compute nodes with static and dynamic power usage.
 
         Power usage is scaled linearly with resource usage.
@@ -79,38 +82,27 @@ class PowerModelNode(PowerModel):
             up to 150 Watt when under full load (`max_power=150`).
 
         Args:
-            max_power: Maximum power usage of the node under full load.
+            max_power: Maximum power usage of the node under full load. Cannot be combined with `power_per_mips`.
+            power_per_mips: Incremental power usage for each mips. Cannot be combined with `max_power`.
             static_power: Idle power usage of the node without any load.
         """
+        if max_power is None and power_per_mips is None:
+            raise ValueError("Either `max_power` or `power_per_mips` have to be stated.")
+        if max_power is not None and power_per_mips is not None:
+            raise ValueError("The parameters `max_power` or `power_per_mips` cannot be combined.")
         self.max_power = max_power
+        self.power_per_mips = power_per_mips
         self.static_power = static_power
         self.node = None
 
     def measure(self) -> PowerMeasurement:
-        dynamic_power = (self.max_power - self.static_power) * self.node.utilization()
+        if self.max_power is not None:
+            dynamic_power = (self.max_power - self.static_power) * self.node.utilization()
+        elif self.power_per_mips is not None:
+            dynamic_power = self.power_per_mips * self.node.used_mips
+        else:
+            raise RuntimeError("Invalid state of PowerModelNode: `max_power` and `power_per_mips` are undefined.")
         return PowerMeasurement(dynamic=dynamic_power, static=self.static_power)
-
-    def set_parent(self, parent):
-        self.node = parent
-
-
-class PowerModelNodeShared(PowerModel):
-    def __init__(self, power_per_mips: float):
-        """Power model for shared infrastructure.
-
-        For nodes such as data centers we may know neither the static nor max power usage and hence define only the
-        incremental power usage.
-
-
-        Args:
-            power_per_mips: Incremental power per million instructions per seconds in W/MIPS (or J/MIP)
-        """
-        self.power_per_mips = power_per_mips
-        self.node = None
-
-    def measure(self) -> PowerMeasurement:
-        dynamic_power = self.power_per_mips * self.node.used_mips
-        return PowerMeasurement(dynamic=dynamic_power, static=0)
 
     def set_parent(self, parent):
         self.node = parent

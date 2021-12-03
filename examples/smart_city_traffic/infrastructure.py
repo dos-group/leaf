@@ -5,7 +5,7 @@ import simpy
 from leaf.application import Application, SourceTask, ProcessingTask, SinkTask
 from examples.smart_city_traffic.settings import *
 from leaf.infrastructure import Link, Node
-from leaf.power import PowerModelLink, PowerModelNode, PowerModelNodeShared, PowerMeasurement
+from leaf.power import PowerModelLink, PowerModelNode, PowerMeasurement
 
 """Counter for incrementally naming nodes"""
 _fog_nodes_created = 0
@@ -15,7 +15,7 @@ _taxis_created = 0
 
 class Cloud(Node):
     def __init__(self):
-        super().__init__("cloud", mips=CLOUD_MIPS, power_model=PowerModelNodeShared(CLOUD_WATT_PER_MIPS))
+        super().__init__("cloud", mips=CLOUD_MIPS, power_model=PowerModelNode(power_per_mips=CLOUD_WATT_PER_MIPS))
 
 
 class FogNode(Node):

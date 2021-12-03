@@ -5,7 +5,7 @@ import simpy
 from leaf.application import Application, SourceTask, ProcessingTask, SinkTask
 from leaf.infrastructure import Node, Link, Infrastructure
 from leaf.orchestrator import Orchestrator
-from leaf.power import PowerModelNode, PowerModelNodeShared, PowerModelLink, power_meter
+from leaf.power import PowerModelNode, PowerModelLink, power_meter
 
 RANDOM_SEED = 1
 
@@ -80,7 +80,7 @@ def create_infrastructure():
     infrastructure = Infrastructure()
     sensor = Node("sensor", mips=1000, power_model=PowerModelNode(max_power=1.8, static_power=0.2))
     fog_node = Node("fog", mips=400000, power_model=PowerModelNode(max_power=200, static_power=30))
-    cloud = Node("cloud", power_model=PowerModelNodeShared(power_per_mips=700))
+    cloud = Node("cloud", power_model=PowerModelNode(power_per_mips=700))
     wifi_link_up = Link(sensor, fog_node, latency=10, bandwidth=30e6, power_model=PowerModelLink(300))
     wan_link_up = Link(fog_node, cloud, latency=5, bandwidth=1e9, power_model=PowerModelLink(6000))
 
