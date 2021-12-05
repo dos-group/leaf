@@ -44,8 +44,8 @@ def place_task_after_2_seconds(env, node, task):
     yield env.timeout(2)
     task.allocate(node)
 
-node = Node("node1", mips=100, power_model=PowerModelNode(max_power=30, static_power=10))
-task = Task(mips=100)
+node = Node("node1", cu=100, power_model=PowerModelNode(max_power=30, static_power=10))
+task = Task(cu=100)
 
 env = simpy.Environment()  
 # register our task placement process

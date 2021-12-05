@@ -8,8 +8,8 @@ from leaf.power import PowerAware, PowerMeasurement
 
 class Node(PowerAware):
     def __init__(self, name: str,
-                 mips: Optional[float] = None,
-                 power_model: Optional["PowerModel"] = None):
+                 cu: Optional[float] = None,
+                 power_model: Optional["PowerModelNode"] = None):
         """A compute node in the infrastructure graph.
 
         This can represent any kind of node, e.g.
@@ -20,32 +20,35 @@ class Node(PowerAware):
 
         Args:
             name: Name of the node. This is used to refer to nodes when defining links.
-            mips: Maximum processing power the node provides in "million instructions per second".
-                If None, the node has unlimited processing power.
+            cu: Maximum processing power the node provides in "compute units", a imaginary unit for computational power
+                to express differences between hardware platforms. If None, the node has unlimited processing power.
             power_model: Power model which determines the power usage of the node.
         """
         self.name = name
-        if mips is None:
-            self.mips = math.inf
+        if cu is None:
+            self.cu = math.inf
         else:
-            self.mips = mips
-        self.used_mips = 0
+            self.cu = cu
+        self.used_cu = 0
         self.tasks: List["Task"] = []
 
         if power_model:
+            if cu is None and power_model.max_power is not None:
+                raise ValueError("Cannot use PowerModelNode with `max_power` on a compute node with unlimited "
+                                 "processing power")
             self.power_model = power_model
             self.power_model.set_parent(self)
 
     def __repr__(self):
-        mips_repr = self.mips if self.mips is not None else "∞"
-        return f"{self.__class__.__name__}('{self.name}', mips={self.used_mips}/{mips_repr})"
+        cu_repr = self.cu if self.cu is not None else "∞"
+        return f"{self.__class__.__name__}('{self.name}', cu={self.used_cu}/{cu_repr})"
 
     def utilization(self) -> float:
         """Return the current utilization of the resource in the range [0, 1]."""
         try:
-            return self.used_mips / self.mips
+            return self.used_cu / self.cu
         except ZeroDivisionError:
-            assert self.used_mips == 0
+            assert self.used_cu == 0
             return 0
 
     def _add_task(self, task: "Task"):
@@ -53,7 +56,7 @@ class Node(PowerAware):
 
         Private as this is only called by leaf.application.Task and not part of the public interface.
         """
-        self._reserve_mips(task.mips)
+        self._reserve_cu(task.cu)
         self.tasks.append(task)
 
     def _remove_task(self, task: "Task"):
@@ -61,7 +64,7 @@ class Node(PowerAware):
 
         Private as this is only called by leaf.application.Task and not part of the public interface.
         """
-        self._release_mips(task.mips)
+        self._release_cu(task.cu)
         self.tasks.remove(task)
 
     def measure_power(self) -> PowerMeasurement:
@@ -70,17 +73,17 @@ class Node(PowerAware):
         except TypeError:
             raise RuntimeError(f"{self} has no power model.")
 
-    def _reserve_mips(self, mips: float):
-        new_used_mips = self.used_mips + mips
-        if new_used_mips > self.mips:
-            raise ValueError(f"Cannot reserve {mips} mips on compute node {self}.")
-        self.used_mips = new_used_mips
+    def _reserve_cu(self, cu: float):
+        new_used_cu = self.used_cu + cu
+        if new_used_cu > self.cu:
+            raise ValueError(f"Cannot reserve {cu} CU on compute node {self}.")
+        self.used_cu = new_used_cu
 
-    def _release_mips(self, mips: float):
-        new_used_mips = self.used_mips - mips
-        if new_used_mips < 0:
-            raise ValueError(f"Cannot release {mips} mips on compute node {self}.")
-        self.used_mips = new_used_mips
+    def _release_cu(self, cu: float):
+        new_used_cu = self.used_cu - cu
+        if new_used_cu < 0:
+            raise ValueError(f"Cannot release {cu} CU on compute node {self}.")
+        self.used_cu = new_used_cu
 
 
 class Link(PowerAware):

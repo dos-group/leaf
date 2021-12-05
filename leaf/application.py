@@ -8,20 +8,23 @@ from leaf.power import PowerAware, PowerMeasurement
 
 
 class Task(PowerAware):
-    def __init__(self, mips: float):
+    def __init__(self, cu: float):
         """Task that can be placed on a :class:`Node`.
 
         Tasks _can_ be connected via :class:`Link`s to build an :class:`Application`.
 
         Args:
-            mips: Million instructions per second required to execute the task.
+            cu: Amount of compute units (CU) required to execute the task. CUs a imaginary unit for computational
+                power to express differences between hardware platforms.
+
+            Million instructions per second required to execute the task.
         """
         self.id: Optional[int] = None
-        self.mips = mips
+        self.cu = cu
         self.node: Optional[Node] = None
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(id={self.id}, mips={self.mips})"
+        return f"{self.__class__.__name__}(id={self.id}, cu={self.cu})"
 
     def allocate(self, node: Node):
         """Place the task on a certain node and allocate resources."""
@@ -39,48 +42,48 @@ class Task(PowerAware):
 
     def measure_power(self) -> PowerMeasurement:
         try:
-            return self.node.measure_power().multiply(self.mips / self.node.used_mips)
+            return self.node.measure_power().multiply(self.cu / self.node.used_cu)
         except ZeroDivisionError:
             return PowerMeasurement(0, 0)
 
 
 class SourceTask(Task):
-    def __init__(self, mips: float = 0, bound_node: Node = None):
+    def __init__(self, cu: float = 0, bound_node: Node = None):
         """Source task of an application that is bound to a certain node, e.g. a sensor generating data.
 
         Source tasks never have incoming and always have outgoing data flows.
 
         Args:
-            mips: Million instructions per second required to execute the task.
+            cu: Million instructions per second required to execute the task.
             bound_node: The node which the task is bound to. Cannot be None.
         """
-        super().__init__(mips)
+        super().__init__(cu)
         if bound_node is None:
             raise ValueError("bound_node for SourceTask cannot be None")
         self.bound_node = bound_node
 
 
 class ProcessingTask(Task):
-    def __init__(self, mips: float = 0):
+    def __init__(self, cu: float = 0):
         """Processing task of an application that can be freely placed on the infrastructure.
 
         Processing tasks always have incoming and outgoing data flows.
 
         Args:
-            mips: Million instructions per second required to execute the task.
+            cu: Million instructions per second required to execute the task.
         """
-        super().__init__(mips)
+        super().__init__(cu)
 
 
 class SinkTask(Task):
-    def __init__(self, mips: float = 0, bound_node: Node = None):
+    def __init__(self, cu: float = 0, bound_node: Node = None):
         """Sink task of an application that is bound to a certain node, e.g. a cloud server for storage.
 
         Args:
-            mips: Million instructions per second required to execute the task.
+            cu: Million instructions per second required to execute the task.
             bound_node: The node which the task is bound to. Cannot be None.
         """
-        super().__init__(mips)
+        super().__init__(cu)
         if bound_node is None:
             raise ValueError("bound_node for SourceTask cannot be None")
         self.bound_node = bound_node

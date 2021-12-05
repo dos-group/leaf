@@ -15,14 +15,14 @@ _taxis_created = 0
 
 class Cloud(Node):
     def __init__(self):
-        super().__init__("cloud", mips=CLOUD_MIPS, power_model=PowerModelNode(power_per_mips=CLOUD_WATT_PER_MIPS))
+        super().__init__("cloud", cu=CLOUD_CU, power_model=PowerModelNode(power_per_cu=CLOUD_WATT_PER_CU))
 
 
 class FogNode(Node):
     def __init__(self, location: "Location"):
         # TODO Shutdown!
         global _fog_nodes_created
-        super().__init__(f"fog_{_fog_nodes_created}", mips=FOG_MIPS,
+        super().__init__(f"fog_{_fog_nodes_created}", cu=FOG_CU,
                          power_model=PowerModelNode(max_power=FOG_MAX_POWER, static_power=FOG_STATIC_POWER))
         _fog_nodes_created += 1
         self.location = location
@@ -41,28 +41,25 @@ class FogNode(Node):
 
     def remove_task(self, task: "Task"):
         super().remove_task(task)
-        if FOG_IDLE_SHUTDOWN and self.used_mips == 0:
+        if FOG_IDLE_SHUTDOWN and self.used_cu == 0:
             self.shutdown = True
-
-
-
 
 
 class TrafficLight(Node):
     def __init__(self, location: "Location", application_sink: Node):
         global _traffic_lights_created
-        super().__init__(f"traffic_light_{_traffic_lights_created}", mips=0, power_model=PowerModelNode(0, 0))
+        super().__init__(f"traffic_light_{_traffic_lights_created}", cu=0, power_model=PowerModelNode(0, 0))
         _traffic_lights_created += 1
         self.location = location
         self.application = self._create_cctv_application(application_sink)
 
     def _create_cctv_application(self, application_sink: Node):
         application = Application()
-        source_task = SourceTask(mips=0, bound_node=self)
+        source_task = SourceTask(cu=0, bound_node=self)
         application.add_task(source_task)
-        processing_task = ProcessingTask(mips=CCTV_PROCESSOR_MIPS)
+        processing_task = ProcessingTask(cu=CCTV_PROCESSOR_CU)
         application.add_task(processing_task, incoming_data_flows=[(source_task, CCTV_SOURCE_TO_PROCESSOR_BIT_RATE)])
-        sink_task = SinkTask(mips=0, bound_node=application_sink)
+        sink_task = SinkTask(cu=0, bound_node=application_sink)
         application.add_task(sink_task, incoming_data_flows=[(processing_task, CCTV_PROCESSOR_TO_SINK_BIT_RATE)])
         return application
 
@@ -70,7 +67,7 @@ class TrafficLight(Node):
 class Taxi(Node):
     def __init__(self, env: simpy.Environment, mobility_model: "TaxiMobilityModel", application_sinks: List[Node]):
         global _taxis_created
-        super().__init__(f"taxi_{_taxis_created}", mips=0, power_model=PowerModelNode(0, 0))
+        super().__init__(f"taxi_{_taxis_created}", cu=0, power_model=PowerModelNode(0, 0))
         _taxis_created += 1
         self.env = env
         self.application = self._create_v2i_application(application_sinks)
@@ -82,12 +79,12 @@ class Taxi(Node):
 
     def _create_v2i_application(self, application_sinks: List[Node]) -> Application:
         application = Application()
-        source_task = SourceTask(mips=0, bound_node=self)
+        source_task = SourceTask(cu=0, bound_node=self)
         application.add_task(source_task)
-        processing_task = ProcessingTask(mips=V2I_PROCESSOR_MIPS)
+        processing_task = ProcessingTask(cu=V2I_PROCESSOR_CU)
         application.add_task(processing_task, incoming_data_flows=[(source_task, V2I_SOURCE_TO_PROCESSOR_BIT_RATE)])
         for application_sink in application_sinks:
-            sink_task = SinkTask(mips=0, bound_node=application_sink)
+            sink_task = SinkTask(cu=0, bound_node=application_sink)
             application.add_task(sink_task, incoming_data_flows=[(processing_task, V2I_PROCESSOR_TO_SINK_BIT_RATE)])
         return application
 
