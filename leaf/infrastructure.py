@@ -87,7 +87,7 @@ class Node(PowerAware):
 
 
 class Link(PowerAware):
-    def __init__(self, src: Node, dst: Node, bandwidth: float, power_model: "PowerModel", latency: float = 0):
+    def __init__(self, src: Node, dst: Node, bandwidth: float, power_model: "PowerModelLink", latency: float = 0):
         """A network link in the infrastructure graph.
 
         This can represent any kind of network link, e.g.

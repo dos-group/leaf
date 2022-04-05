@@ -25,11 +25,11 @@ if __name__ == "__main__":
         python_requires=">=3.6",
         setup_requires=['setuptools_scm'],
         install_requires=[
-            'networkx~=2.5',
-            'numpy~=1.19',
-            'pandas~=1.1',
-            'simpy~=4.0',
-            'tqdm~=4.0',
+            'networkx',
+            'numpy',
+            'pandas',
+            'simpy',
+            'tqdm',
         ],
         extras_require={
             "docs": ["sphinx", "alabaster"]
