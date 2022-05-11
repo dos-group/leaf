@@ -30,6 +30,7 @@ if __name__ == "__main__":
             'pandas',
             'simpy',
             'tqdm',
+            'dash', 'dash-cytoscape', 'dash-bootstrap-components'
         ],
         extras_require={
             "docs": ["sphinx", "alabaster"]
