@@ -9,7 +9,8 @@ from leaf.power import PowerAware, PowerMeasurement
 class Node(PowerAware):
     def __init__(self, name: str,
                  cu: Optional[float] = None,
-                 power_model: Optional["PowerModelNode"] = None):
+                 power_model: Optional["PowerModelNode"] = None,
+                 location: Optional[Location] = None):
         """A compute node in the infrastructure graph.
 
         This can represent any kind of node, e.g.
@@ -23,6 +24,7 @@ class Node(PowerAware):
             cu: Maximum processing power the node provides in "compute units", a imaginary unit for computational power
                 to express differences between hardware platforms. If None, the node has unlimited processing power.
             power_model: Power model which determines the power usage of the node.
+            location: The (x,y) coordinates of the node
         """
         self.name = name
         if cu is None:
@@ -38,6 +40,8 @@ class Node(PowerAware):
                                  "processing power")
             self.power_model = power_model
             self.power_model.set_parent(self)
+
+        self.location = location
 
     def __repr__(self):
         cu_repr = self.cu if self.cu is not None else "∞"

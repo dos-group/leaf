@@ -73,8 +73,10 @@ def main(count_taxis: bool, measure_infrastructure: bool, measure_applications: 
 class _PowerMeter:
     def __init__(self, env, entities, **kwargs):
         self.measurements = []
-        env.process(power_meter(env, entities, measurement_interval=POWER_MEASUREMENT_INTERVAL,
-                                callback=lambda m: self.measurements.append(m), **kwargs))
+        env.process(power_meter(env, entities,
+                                measurement_interval=POWER_MEASUREMENT_INTERVAL,
+                                callback=lambda m: self.measurements.append(m),
+                                **kwargs))
 
 
 class TaxiCounter:

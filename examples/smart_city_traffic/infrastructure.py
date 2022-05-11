@@ -23,9 +23,9 @@ class FogNode(Node):
         # TODO Shutdown!
         global _fog_nodes_created
         super().__init__(f"fog_{_fog_nodes_created}", cu=FOG_CU,
-                         power_model=PowerModelNode(max_power=FOG_MAX_POWER, static_power=FOG_STATIC_POWER))
+                         power_model=PowerModelNode(max_power=FOG_MAX_POWER, static_power=FOG_STATIC_POWER),
+                         location=location)
         _fog_nodes_created += 1
-        self.location = location
         self.shutdown = FOG_IDLE_SHUTDOWN
 
     def measure_power(self) -> PowerMeasurement:
@@ -48,9 +48,9 @@ class FogNode(Node):
 class TrafficLight(Node):
     def __init__(self, location: "Location", application_sink: Node):
         global _traffic_lights_created
-        super().__init__(f"traffic_light_{_traffic_lights_created}", cu=0, power_model=PowerModelNode(0, 0))
+        super().__init__(f"traffic_light_{_traffic_lights_created}", cu=0, power_model=PowerModelNode(0, 0),
+                         location=location)
         _traffic_lights_created += 1
-        self.location = location
         self.application = self._create_cctv_application(application_sink)
 
     def _create_cctv_application(self, application_sink: Node):
