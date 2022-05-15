@@ -11,57 +11,40 @@ from leaf.mobility import Location
 
 class MobilityManager:
 
-    def __init__(self, env: simpy.Environment, city: "City"):
-        self.env = env
+    def __init__(self, city: "City"):
         self.city = city
-        self.add_taxis_process = env.process(self._add_taxis_process())
 
-    def _add_taxis_process(self):
+    def run(self, env: simpy.Environment):
         while True:
-            for taxi in self._create_taxis():
+            for taxi in self._create_taxis(env):
                 self.city.add_taxi_and_start_v2i_app(taxi)
-                self.env.process(self._remove_taxi_process(taxi))
-            yield self.env.timeout(UPDATE_MOBILITY_INTERVAL)
+                env.process(self._remove_taxi_process(env, taxi))
+            yield env.timeout(UPDATE_MOBILITY_INTERVAL)
 
-    def _remove_taxi_process(self, taxi: "Taxi"):
-        yield self.env.timeout(taxi.mobility_model.life_time)
+    def _remove_taxi_process(self, env: simpy.Environment, taxi: "Taxi"):
+        yield env.timeout(taxi.mobility_model.life_time)
         self.city.remove_taxi_and_stop_v2i_app(taxi)
 
-    def _create_taxis(self) -> List["Taxi"]:
-        avg_taxi_speed = _avg_taxi_speed(self.env.now)
-        avg_taxi_count = _avg_taxi_count(self.env.now)
+    def _create_taxis(self, env: simpy.Environment) -> List["Taxi"]:
+        avg_taxi_speed = _avg_taxi_speed(env.now)
+        avg_taxi_count = _avg_taxi_count(env.now)
         taxi_count = RNG.poisson(avg_taxi_count)
-        return [self._create_taxi(speed=avg_taxi_speed) for _ in range(taxi_count)]
+        return [self._create_taxi(env=env, speed=avg_taxi_speed) for _ in range(taxi_count)]
 
-    def _create_taxi(self, speed: float) -> "Taxi":
+    def _create_taxi(self, env: simpy.Environment, speed: float) -> "Taxi":
         start = self._random_gate_location()
         dst = self._random_gate_location()
         while not start.distance(dst) > 0.5:
             dst = self._random_gate_location()
         path = nx.shortest_path(self.city.street_graph, source=start, target=dst)
-        mobility_model = TaxiMobilityModel(path, speed=speed, start_time=self.env.now)
-        return Taxi(self.env, mobility_model, application_sinks=self._traffic_lights_on_taxi_path(path))
+        mobility_model = TaxiMobilityModel(path, speed=speed, start_time=env.now)
+        return Taxi(env, mobility_model, application_sinks=self._traffic_lights_on_taxi_path(path))
 
     def _random_gate_location(self) -> Location:
         return RNG.choice(self.city.entry_point_locations)
 
     def _traffic_lights_on_taxi_path(self, path: List) -> List[TrafficLight]:
         return [tl for tl in self.city.infrastructure.nodes(type_filter=TrafficLight) if tl.location in path]
-
-    # /**
-    #      * Calculates which traffic light systems are in the path of the taxi.
-    #      */
-    #     private static List<TrafficLightSystem> getTrafficLightSystemsOnPath(Taxi taxi) {
-    #         List<Location> locations = taxi.getMobilityModel().getPath().getVertexList();
-    #         locations.remove(locations.size() - 1);
-    #         locations.remove(0);
-    #         Set<Location> locationSet = new HashSet<>(locations);
-    #
-    #         InfrastructureGraphCity topologyExp = (InfrastructureGraphCity) taxi.getSimulation().getNetworkTopology();
-    #         return topologyExp.getTraficLightSystems().stream()
-    #             .filter(tls -> locationSet.contains(tls.getLocation()))
-    #             .collect(Collectors.toList());
-    #     }
 
 
 class TaxiMobilityModel:

@@ -21,7 +21,8 @@ def main(count_taxis: bool, measure_infrastructure: bool, measure_applications: 
     # ----------------- Set up experiment -----------------
     env = simpy.Environment()
     city = City(env)
-    MobilityManager(env, city)
+    mobility_manager = MobilityManager(city)
+    env.process(mobility_manager.run(env))
 
     # ----------------- Initialize meters -----------------
     if count_taxis:
