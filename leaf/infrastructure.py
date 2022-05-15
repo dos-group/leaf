@@ -4,6 +4,7 @@ from typing import List, Optional, Type, TypeVar, Iterator, Union, Tuple
 import networkx as nx
 
 from leaf.power import PowerAware, PowerMeasurement
+from leaf.mobility import Location
 
 
 class Node(PowerAware):

@@ -58,11 +58,6 @@ Energy consumption graphs
     - E.g. how about a tool that lets users add (i) new lineplots and (ii) lines to plots? 
 - toggle static visualization
 
-Live visualization mode
-- Start/Stop the visualization
-- Real-time/steady-time mode?
-  - How often can/should we update the plots?
-
 
 ## Things that would be cool but are probably out of scope
 
@@ -71,3 +66,8 @@ Live visualization mode
 - Metrics like CPU usage, bandwidth usage, ...
 - Other high-level metrics like number of nodes; over time; ...
 - Translate simulation time to other time scale
+
+Live visualization mode
+- Start/Stop the visualization
+- Real-time/steady-time mode?
+  - How often can/should we update the plots?

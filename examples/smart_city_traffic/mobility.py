@@ -1,4 +1,3 @@
-import math
 from typing import List, Optional
 
 import networkx as nx
@@ -7,7 +6,7 @@ import simpy
 from examples.smart_city_traffic.infrastructure import TrafficLight, Taxi
 from examples.smart_city_traffic.settings import UPDATE_MOBILITY_INTERVAL, MAX_CARS_PER_MINUTE, RNG, \
     TAXI_COUNT_DISTRIBUTION, TAXI_SPEED_DISTRIBUTION
-from mobility import Location
+from leaf.mobility import Location
 
 
 class MobilityManager:

@@ -5,7 +5,7 @@ import simpy
 from leaf.application import Application, SourceTask, ProcessingTask, SinkTask
 from leaf.infrastructure import Node, Link, Infrastructure
 from leaf.orchestrator import Orchestrator
-from leaf.power import PowerModelNode, PowerModelLink, power_meter
+from leaf.power import PowerModelNode, PowerModelLink, PowerMeter
 
 RANDOM_SEED = 1
 
@@ -26,41 +26,38 @@ def main():
 
     Log Output:
         INFO	Placing Application(tasks=3):
-        INFO	- SourceTask(id=0, cu=100) on Node('sensor', cu=0/1000).
-        INFO	- ProcessingTask(id=1, cu=5000) on Node('fog', cu=0/400000).
-        INFO	- SinkTask(id=2, cu=100) on Node('cloud', cu=0/inf).
+        INFO	- SourceTask(id=0, cu=0.1) on Node('sensor', cu=0/1).
+        INFO	- ProcessingTask(id=1, cu=5) on Node('fog', cu=0/400).
+        INFO	- SinkTask(id=2, cu=0.5) on Node('cloud', cu=0/inf).
         INFO	- DataFlow(bit_rate=1000) on [Link('sensor' -> 'fog', bandwidth=0/30000000.0, latency=10)].
         INFO	- DataFlow(bit_rate=200) on [Link('fog' -> 'cloud', bandwidth=0/1000000000.0, latency=5)].
-        DEBUG	0: cloud_and_fog_meter: PowerMeasurement(dynamic=70002.125W, static=30W)
-        DEBUG	0: infrastructure_meter: PowerMeasurement(dynamic=1570002.2850000001W, static=30.2W)
-        DEBUG	0.5: application_meter: PowerMeasurement(dynamic=1570002.2850000001W, static=30.2W)
-        DEBUG	1: cloud_and_fog_meter: PowerMeasurement(dynamic=70002.125W, static=30W)
-        DEBUG	1.5: application_meter: PowerMeasurement(dynamic=1570002.2850000001W, static=30.2W)
-        DEBUG	2: infrastructure_meter: PowerMeasurement(dynamic=1570002.2850000001W, static=30.2W)
-        DEBUG	2: cloud_and_fog_meter: PowerMeasurement(dynamic=70002.125W, static=30W)
-        DEBUG	2.5: application_meter: PowerMeasurement(dynamic=1570002.2850000001W, static=30.2W)
-        DEBUG	3: cloud_and_fog_meter: PowerMeasurement(dynamic=70002.125W, static=30W)
-        DEBUG	3.5: application_meter: PowerMeasurement(dynamic=1570002.2850000001W, static=30.2W)
-        DEBUG	4: infrastructure_meter: PowerMeasurement(dynamic=1570002.2850000001W, static=30.2W)
-        DEBUG	4: cloud_and_fog_meter: PowerMeasurement(dynamic=70002.125W, static=30W)
-        DEBUG	4.5: application_meter: PowerMeasurement(dynamic=1570002.2850000001W, static=30.2W)
+        DEBUG	0: cloud_and_fog_meter: PowerMeasurement(dynamic=2.38W, static=30.00W)
+        DEBUG	0: infrastructure_meter: PowerMeasurement(dynamic=2.54W, static=30.20W)
+        DEBUG	0.5: application_meter: PowerMeasurement(dynamic=2.54W, static=30.20W)
+        DEBUG	1: cloud_and_fog_meter: PowerMeasurement(dynamic=2.38W, static=30.00W)
+        DEBUG	1.5: application_meter: PowerMeasurement(dynamic=2.54W, static=30.20W)
+        DEBUG	2: infrastructure_meter: PowerMeasurement(dynamic=2.54W, static=30.20W)
+        DEBUG	2: cloud_and_fog_meter: PowerMeasurement(dynamic=2.38W, static=30.00W)
+        DEBUG	2.5: application_meter: PowerMeasurement(dynamic=2.54W, static=30.20W)
+        DEBUG	3: cloud_and_fog_meter: PowerMeasurement(dynamic=2.38W, static=30.00W)
+        DEBUG	3.5: application_meter: PowerMeasurement(dynamic=2.54W, static=30.20W)
+        DEBUG	4: infrastructure_meter: PowerMeasurement(dynamic=2.54W, static=30.20W)
+        DEBUG	4: cloud_and_fog_meter: PowerMeasurement(dynamic=2.38W, static=30.00W)
+        DEBUG	4.5: application_meter: PowerMeasurement(dynamic=2.54W, static=30.20W)
     """
     infrastructure = create_infrastructure()
     application = create_application(source_node=infrastructure.node("sensor"), sink_node=infrastructure.node("cloud"))
     orchestrator = SimpleOrchestrator(infrastructure)
     orchestrator.place(application)
 
-    application_measurements = []
-    cloud_and_fog_measurements = []
-    infrastructure_measurements = []
+    application_pm = PowerMeter(application, name="application_meter")
+    cloud_and_fog_pm = PowerMeter([infrastructure.node("cloud"), infrastructure.node("fog")], name="cloud_and_fog_meter")
+    infrastructure_pm = PowerMeter(infrastructure, name="infrastructure_meter", measurement_interval=2)
 
     env = simpy.Environment()
-    env.process(power_meter(env, application, name="application_meter", delay=0.5,
-                            callback=lambda m: application_measurements.append(m)))
-    env.process(power_meter(env, [infrastructure.node("cloud"), infrastructure.node("fog")], name="cloud_and_fog_meter",
-                            callback=lambda m: cloud_and_fog_measurements.append(m)))
-    env.process(power_meter(env, infrastructure, name="infrastructure_meter", measurement_interval=2,
-                            callback=lambda m: infrastructure_measurements.append(m)))
+    env.process(application_pm.run(env, delay=0.5))
+    env.process(cloud_and_fog_pm.run(env))
+    env.process(infrastructure_pm.run(env))
     env.run(until=5)
 
 
@@ -81,8 +78,8 @@ def create_infrastructure():
     sensor = Node("sensor", cu=1, power_model=PowerModelNode(max_power=1.8, static_power=0.2))
     fog_node = Node("fog", cu=400, power_model=PowerModelNode(max_power=200, static_power=30))
     cloud = Node("cloud", power_model=PowerModelNode(power_per_cu=0.5))
-    wifi_link_up = Link(sensor, fog_node, latency=10, bandwidth=30e6, power_model=PowerModelLink(300))
-    wan_link_up = Link(fog_node, cloud, latency=5, bandwidth=1e9, power_model=PowerModelLink(6000))
+    wifi_link_up = Link(sensor, fog_node, latency=10, bandwidth=30e6, power_model=PowerModelLink(300e-9))
+    wan_link_up = Link(fog_node, cloud, latency=5, bandwidth=1e9, power_model=PowerModelLink(6000e-9))
 
     infrastructure.add_link(wifi_link_up)
     infrastructure.add_link(wan_link_up)

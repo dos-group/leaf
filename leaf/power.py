@@ -27,7 +27,7 @@ class PowerMeasurement:
         return PowerMeasurement(dynamic, static)
 
     def __repr__(self):
-        return f"PowerMeasurement(dynamic={self.dynamic}W, static={self.static}W)"
+        return f"PowerMeasurement(dynamic={self.dynamic:.2f}W, static={self.static:.2f}W)"
 
     def __float__(self) -> float:
         return float(self.dynamic + self.static)
@@ -166,49 +166,51 @@ class PowerAware(ABC):
 
 
 class PowerMeter:
-    """Convenience class that wraps power_meter()."""
-    def __init__(self, env, entities, **kwargs):
-        self.measurements = []
-        env.process(power_meter(env, entities, callback=lambda m: self.measurements.append(m), **kwargs))
-
-
-def power_meter(env: simpy.Environment,
-                entities: Union[PowerAware, Collection[PowerAware], Callable[[], Collection[PowerAware]]],
-                callback: Callable[[PowerMeasurement], None],
-                name: Optional[str] = None,
-                measurement_interval: Optional[float] = 1,
-                delay: Optional[float] = 0):
-    """Power meter with measures and saves the power of one or more entites in regular intervals.
+    """Power meter that stores the power of one or more entites in regular intervals.
 
     Args:
-        env: Simpy environment (for timing the measurements)
         entities: Can be either (1) a single :class:`PowerAware` entity (2) a list of :class:`PowerAware` entities
             (3) a function which returns a list of :class:`PowerAware` entities, if the number of these entities
             changes during the simulation.
-        callback: TODO
         name: Name of the power meter for logging and reporting
         measurement_interval: The measurement interval.
-        delay: The delay after which the measurements shall be conducted. For some scenarios it makes sense to e.g.
+    """
+    def __init__(self, entities: Union[PowerAware, Collection[PowerAware], Callable[[], Collection[PowerAware]]],
+                 name: Optional[str] = None, measurement_interval: Optional[float] = 1):
+        self.entities = entities
+        if name is None:
+            global _unnamed_power_meters_created
+            self.name = f"power_meter_{_unnamed_power_meters_created}"
+            _unnamed_power_meters_created += 1
+        else:
+            self.name = name
+        self.measurement_interval = measurement_interval
+        self.measurements = []
+
+    def run(self, env: simpy.Environment, delay: Optional[float] = 0):
+        """Starts the power meter process.
+
+        Args:
+            env: Simpy environment (for timing the measurements)
+            delay: The delay after which the measurements shall be conducted. For some scenarios it makes sense to e.g.
             include a tiny delay to make sure that all events at a previous time step were processed before the
             measurement is conducted.
-    """
-    if name is None:
-        global _unnamed_power_meters_created
-        name = f"power_meter_{_unnamed_power_meters_created}"
-        _unnamed_power_meters_created += 1
 
-    yield env.timeout(delay)
-    while True:
-        if isinstance(entities, PowerAware):
-            measurement = entities.measure_power()
-        else:
-            if isinstance(entities, Collection):
-                entities = entities
-            elif isinstance(entities, Callable):
-                entities = entities()
+        Returns:
+            sim
+        """
+        yield env.timeout(delay)
+        while True:
+            if isinstance(self.entities, PowerAware):
+                measurement = self.entities.measure_power()
             else:
-                raise ValueError(f"{name}: Unsupported type {type(entities)} for observable={entities}.")
-            measurement = PowerMeasurement.sum(entity.measure_power() for entity in entities)
-        callback(measurement)
-        logger.debug(f"{env.now}: {name}: {measurement}")
-        yield env.timeout(measurement_interval)
+                if isinstance(self.entities, Collection):
+                    entities = self.entities
+                elif isinstance(self.entities, Callable):
+                    entities = self.entities()
+                else:
+                    raise ValueError(f"{self.name}: Unsupported type {type(self.entities)} for observable={self.entities}.")
+                measurement = PowerMeasurement.sum(entity.measure_power() for entity in entities)
+            self.measurements.append(measurement)
+            logger.debug(f"{env.now}: {self.name}: {measurement}")
+            yield env.timeout(self.measurement_interval)
