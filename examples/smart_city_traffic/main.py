@@ -11,7 +11,7 @@ from examples.smart_city_traffic.mobility import MobilityManager
 from examples.smart_city_traffic.settings import SIMULATION_TIME, FOG_DCS, POWER_MEASUREMENT_INTERVAL, \
     FOG_IDLE_SHUTDOWN
 from leaf.infrastructure import Infrastructure
-from leaf.power import power_meter
+from leaf.power import PowerMeter
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.WARN, format='%(levelname)s: %(message)s')
@@ -21,7 +21,8 @@ def main(count_taxis: bool, measure_infrastructure: bool, measure_applications: 
     # ----------------- Set up experiment -----------------
     env = simpy.Environment()
     city = City(env)
-    MobilityManager(env, city)
+    mobility_manager = MobilityManager(city)
+    env.process(mobility_manager.run(env))
 
     # ----------------- Initialize meters -----------------
     if count_taxis:
@@ -29,16 +30,23 @@ def main(count_taxis: bool, measure_infrastructure: bool, measure_applications: 
         taxi_counter = TaxiCounter(env, city.infrastructure)
     if measure_infrastructure:
         # Measures the power usage of cloud and fog nodes as well as WAN and WiFi links
-        pm_cloud = _PowerMeter(env, entities=city.infrastructure.nodes(type_filter=Cloud), name="cloud")
-        pm_fog = _PowerMeter(env, entities=city.infrastructure.nodes(type_filter=FogNode), name="fog")
-        pm_wan_up = _PowerMeter(env, entities=city.infrastructure.links(type_filter=LinkWanUp), name="wan_up")
-        pm_wan_down = _PowerMeter(env, entities=city.infrastructure.links(type_filter=LinkWanDown), name="wan_down")
-        pm_wifi = _PowerMeter(env, entities=lambda: city.infrastructure.links(
-            type_filter=(LinkWifiBetweenTrafficLights, LinkWifiTaxiToTrafficLight)), name="wifi")
+        pm_cloud = PowerMeter(entities=city.infrastructure.nodes(type_filter=Cloud), name="cloud", measurement_interval=POWER_MEASUREMENT_INTERVAL)
+        pm_fog = PowerMeter(entities=city.infrastructure.nodes(type_filter=FogNode), name="fog", measurement_interval=POWER_MEASUREMENT_INTERVAL)
+        pm_wan_up = PowerMeter(entities=city.infrastructure.links(type_filter=LinkWanUp), name="wan_up", measurement_interval=POWER_MEASUREMENT_INTERVAL)
+        pm_wan_down = PowerMeter(entities=city.infrastructure.links(type_filter=LinkWanDown), name="wan_down", measurement_interval=POWER_MEASUREMENT_INTERVAL)
+        pm_wifi = PowerMeter(entities=lambda: city.infrastructure.links(type_filter=(LinkWifiBetweenTrafficLights, LinkWifiTaxiToTrafficLight)), name="wifi", measurement_interval=POWER_MEASUREMENT_INTERVAL)
+
+        env.process(pm_cloud.run(env))
+        env.process(pm_fog.run(env))
+        env.process(pm_wan_up.run(env))
+        env.process(pm_wan_down.run(env))
+        env.process(pm_wifi.run(env))
     if measure_applications:
         # Measures the power usage of the V2I and CCTV applications
-        pm_v2i = _PowerMeter(env, entities=lambda: [taxi.application for taxi in city.infrastructure.nodes(type_filter=Taxi)], name="v2i")
-        pm_cctv = _PowerMeter(env, entities=lambda: [tl.application for tl in city.infrastructure.nodes(type_filter=TrafficLight)], name="cctv")
+        pm_v2i = PowerMeter(entities=lambda: [taxi.application for taxi in city.infrastructure.nodes(type_filter=Taxi)], name="v2i", measurement_interval=POWER_MEASUREMENT_INTERVAL)
+        pm_cctv = PowerMeter(entities=lambda: [tl.application for tl in city.infrastructure.nodes(type_filter=TrafficLight)], name="cctv", measurement_interval=POWER_MEASUREMENT_INTERVAL)
+        env.process(pm_v2i.run(env))
+        env.process(pm_cctv.run(env))
 
     # ------------------ Run experiment -------------------
     for until in tqdm(range(1, SIMULATION_TIME)):
@@ -68,13 +76,6 @@ def main(count_taxis: bool, measure_infrastructure: bool, measure_applications: 
             csv_content += f"{i},{v2i.static},{v2i.dynamic},{cctv.static},{cctv.dynamic}\n"
         with open(f"{result_dir}/applications.csv", 'w') as csvfile:
             csvfile.write(csv_content)
-
-
-class _PowerMeter:
-    def __init__(self, env, entities, **kwargs):
-        self.measurements = []
-        env.process(power_meter(env, entities, measurement_interval=POWER_MEASUREMENT_INTERVAL,
-                                callback=lambda m: self.measurements.append(m), **kwargs))
 
 
 class TaxiCounter:
