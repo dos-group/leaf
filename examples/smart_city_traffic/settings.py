@@ -3,7 +3,7 @@ import numpy as np
 RNG = np.random.default_rng(seed=0)  # Random Number Generator
 
 """The following two parameters were altered in the different experiments"""
-FOG_DCS = 0
+FOG_DCS = 2
 FOG_IDLE_SHUTDOWN = False
 
 # TODO Logging

@@ -41,23 +41,30 @@ template = {"layout": {"paper_bgcolor": bgcolor, "plot_bgcolor": bgcolor}}
 
 def load_data(basedir):
     """This can be replaced by real-time simulation code at some point"""
+    with open(f"{basedir}/config.json", "r") as f:
+        config = json.load(f)
     with open(f"{basedir}/infrastructure.json", "r") as f:
         infrastructure = json.load(f)
-    node_measurements = pd.read_csv(f"{basedir}/node_measurements.csv", index_col="time")
-    link_measurements = pd.read_csv(f"{basedir}/link_measurements.csv", index_col="time")
-    return infrastructure, node_measurements, link_measurements
+    node_measurements = pd.read_csv(f"{basedir}/node_measurements.csv")
+    link_measurements = pd.read_csv(f"{basedir}/link_measurements.csv")
+    return config, infrastructure, node_measurements, link_measurements
 
 
 def infrastructure_to_cyto_dict(infrastructure):
     elements = []
     for node in infrastructure["nodes"]:
+        if "x" in node and "y" in node:
+            position = {'x': node["x"], 'y': node["y"]}
+        else:
+            position = {'x': 0, 'y': 0}
         elements.append({
             'data': {'id': node["id"], 'label': node["id"]},
-            # 'position': {'x': 75, 'y': 75},
+            'position': position
         })
     for link in infrastructure["links"]:
+        src, dst = link["id"].split("$")
         elements.append({
-            'data': {'source': link["src"], 'target': link["dst"]}
+            'data': {'source': src, 'target': dst}
         })
     return elements
 
@@ -77,28 +84,8 @@ def blank_fig(height):
     }
 
 
-def figure_cpu(node_measurements, node_ids: List[str]):
-    df = node_measurements[["id", "used_cu"]]
-    df = df.reset_index()
-    df = df.pivot(index='time', columns='id', values='used_cu')
-
-    fig = go.Figure()
-    for node_id in node_ids:
-        cu_series = df[node_id]
-        fig.add_trace(go.Scatter(x=cu_series.index, y=cu_series, name="CPU"))
-    fig.update_layout(
-        title="CPU usage",
-        xaxis_title="Time",
-        yaxis_title="CPU usage",
-    )
-    # fig.update_yaxes(range=[0, 3])
-    return fig
-
-
-def figure_power(node_measurements, node_ids: List[str]):
-    df = node_measurements[["id", "static_power", "dynamic_power"]]
-    df = df.reset_index()
-    df = df.pivot(index='time', columns='id', values=["static_power", "dynamic_power"])
+def power_fig(node_measurements, node_ids: List[str]):
+    df = node_measurements.pivot(index='time', columns='id', values=["static_power", "dynamic_power"])
     df.columns = df.columns.swaplevel()
 
     fig = go.Figure()
@@ -107,7 +94,7 @@ def figure_power(node_measurements, node_ids: List[str]):
         fig.add_trace(go.Scatter(x=node_df.index, y=node_df["static_power"], name="Static", stackgroup='one'))
         fig.add_trace(go.Scatter(x=node_df.index, y=node_df["dynamic_power"], name="Dynamic", stackgroup='one'))
     fig.update_layout(
-        title="Power usage",
+        title=f"Power usage: {', '.join(node_ids)}",
         xaxis_title="Time",
         yaxis_title="Power usage (Watt)",
     )
@@ -115,13 +102,12 @@ def figure_power(node_measurements, node_ids: List[str]):
 
 
 def main():
-    infrastructure, node_measurements, link_measurements = load_data("gui/data_generator/example1_data")
+    config, infrastructure, node_measurements, link_measurements = load_data("../examples/smart_city_traffic/vis_results/fog_2")
 
     # https://dash.plotly.com/cytoscape/reference
     network = cyto.Cytoscape(
-        id='cytoscape-two-nodes',
-        layout={'name': 'cose'},  # if coordinates are used, use 'preset'
-        elements=infrastructure_to_cyto_dict(infrastructure),
+        layout=config["cytoscape_layout"],
+        elements=infrastructure_to_cyto_dict(infrastructure["100"]),
         style=NETWORK_STYLE
         # responsive=True,
         # zoom
@@ -153,7 +139,7 @@ def main():
         if input_value is None:
             return {}
         else:
-            return figure_cpu(node_measurements, [el["id"] for el in input_value])
+            return power_fig(node_measurements, [el["id"] for el in input_value])
 
     app.run_server(debug=True)
 

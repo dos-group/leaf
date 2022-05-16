@@ -75,7 +75,7 @@ class Node(PowerAware):
     def measure_power(self) -> PowerMeasurement:
         try:
             return self.power_model.measure()
-        except TypeError:
+        except AttributeError:
             raise RuntimeError(f"{self} has no power model.")
 
     def _reserve_cu(self, cu: float):
@@ -141,7 +141,7 @@ class Link(PowerAware):
     def measure_power(self) -> PowerMeasurement:
         try:
             return self.power_model.measure()
-        except TypeError:
+        except AttributeError:
             raise RuntimeError(f"{self} has no power model.")
 
     def _reserve_bandwidth(self, bandwidth):
