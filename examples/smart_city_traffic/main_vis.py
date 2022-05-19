@@ -11,8 +11,8 @@ from examples.smart_city_traffic.city import City
 from examples.smart_city_traffic.mobility import MobilityManager
 from examples.smart_city_traffic.settings import SIMULATION_TIME, FOG_DCS, FOG_IDLE_SHUTDOWN
 from leaf.infrastructure import Infrastructure, Node, Link
-from mobility import Location
-from power import PowerMeasurement
+from leaf.mobility import Location
+from leaf.power import PowerMeasurement
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.WARN, format='%(levelname)s: %(message)s')
@@ -113,7 +113,7 @@ def main():
     city = City(env)
     mobility_manager = MobilityManager(city)
     env.process(mobility_manager.run(env))
-
+    #alle 100 Zeitschritte werden die Daten gespeichert
     visualizer = Visualizer(city.infrastructure, measurement_interval=100, default_location=lambda _: Location(0, 0))
     env.process(visualizer.run(env))
 

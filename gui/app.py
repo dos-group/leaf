@@ -18,24 +18,46 @@ bar_selected_color = "#37474f"  # material blue-gray 800
 bar_unselected_opacity = 0.8
 
 CONTAINER_STYLE = {
-    "background-color": "#eee",
+    "backgroundColor": "#eee",
     "margin": "10px 0",
     "padding": "20px 20px",
+    "border": "medium solid lightgray",
     #"borderRadius": "5px"
-    "width": "1200px",
+    "backgroundColor": "rgba(239, 239, 239, 1)",
 }
+CONTAINER_CHILDREN_STYLE = {
+    "height": "100vh",
+    "backgroundColor": "rgba(239, 239, 239, 1)",
 
+}
+PLOT_CONTAINER = {
+    "borderRadius": "10px",
+    "background": "white",
+    "padding": "5px"
+
+}
 NETWORK_CONTAINER_STYLE = {
     "height": "100%",
-    "border": "2px solid #ccc",
-#    "padding-left": 0,
-#    "padding-right": 0,
+    "width": "100%",
+    "backgroundColor": "rgba(239, 239, 239, 1)",
+
 }
 NETWORK_STYLE = {
     "width": "100%",
     "height": "100%",
+    "backgroundColor": "rgba(239, 239, 239, 1)",
+    #"overflow": "hidden"
+
 }
 
+HEADER_STYLE = {
+    "padding": "10px",
+    "margin": "10px",
+    "backgroundColor": "rgba(239, 239, 239, 1)",
+    "position": "absolute",
+    "zIndex": "10",
+
+}
 template = {"layout": {"paper_bgcolor": bgcolor, "plot_bgcolor": bgcolor}}
 
 
@@ -59,7 +81,9 @@ def infrastructure_to_cyto_dict(infrastructure):
             position = {'x': 0, 'y': 0}
         elements.append({
             'data': {'id': node["id"], 'label': node["id"]},
-            'position': position
+            'position': position,
+            'classes': node['id']
+
         })
     for link in infrastructure["links"]:
         src, dst = link["id"].split("$")
@@ -100,6 +124,16 @@ def power_fig(node_measurements, node_ids: List[str]):
     )
     return fig
 
+NETWORK_STYLESHEET = [
+    {
+        'selector': 'node',
+        'style': {
+            'content': 'data(label)',
+            'backgroundColor': "gray",
+        }
+    }
+]
+
 
 def main():
     config, infrastructure, node_measurements, link_measurements = load_data("../examples/smart_city_traffic/vis_results/fog_2")
@@ -108,7 +142,10 @@ def main():
     network = cyto.Cytoscape(
         layout=config["cytoscape_layout"],
         elements=infrastructure_to_cyto_dict(infrastructure["100"]),
-        style=NETWORK_STYLE
+        style=NETWORK_STYLE,
+        maxZoom=12,
+        minZoom=1,
+        stylesheet=NETWORK_STYLESHEET,
         # responsive=True,
         # zoom
         # minZoom
@@ -118,18 +155,38 @@ def main():
     timeseries_chart = dcc.Graph(
         figure=blank_fig(500),
         config={"displayModeBar": False},
+        style={
+            "borderRadius": "20px",
+
+        }
     )
 
     app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
-    app.layout = dbc.Container(html.Div([
+
+    NODEPANEL_STYLE = {
+        "position": "absolute",
+        "right": "-50%",
+        "top": "0",
+        "height": "100vh",
+        "width": "50%",
+        "transition": "right 1000ms",
+        "backgroundColor": "#A2C2C2",
+        "zIndex": "10000",
+        "color": "white",
+        "padding": "20px",
+        "overflow": "hidden"
+
+    }
+    node_panel = html.Div(children=["asdf", dbc.Row(timeseries_chart, style=PLOT_CONTAINER)], style=NODEPANEL_STYLE)
+    app.layout = html.Div([
+        node_panel,
         dbc.Row([
-            dbc.Col(html.H2("LEAF GUI v0.1")),
-        ]),
+            dbc.Col(html.H5(children=["LEAF GUI v0.1"], style=HEADER_STYLE)),
+        ], style={"backgroundColor": "rgba(239, 239, 239, 1)"}),
         dbc.Row([
-            dbc.Col(timeseries_chart),
             dbc.Col(html.Div(network, style=NETWORK_CONTAINER_STYLE)),
-        ])
-    ], style=CONTAINER_STYLE))
+        ], style=CONTAINER_CHILDREN_STYLE)
+    ], style={"overflow": "hidden"})
 
     @app.callback(
         Output(timeseries_chart, component_property='figure'),
@@ -140,6 +197,85 @@ def main():
             return {}
         else:
             return power_fig(node_measurements, [el["id"] for el in input_value])
+
+    selectedNodesBackup: [] = []
+    @app.callback(
+        Output(node_panel, 'style'),
+        Output(node_panel, "children"),
+        Output(network, "stylesheet"),
+        Input(network, component_property='selectedNodeData'),  # tapNodeData
+    )
+
+    def update_nodePanel(selectedNodeData):
+        print("")
+        print("update nodepanel:")
+        print("clicked: ")
+        print(selectedNodeData)
+        is_node_panel_open = False
+        if selectedNodeData is None:
+            print("nothing clicked")
+            NODEPANEL_STYLE["right"] = "-50%"
+            return NODEPANEL_STYLE, "", NETWORK_STYLESHEET
+        else:
+            right = NODEPANEL_STYLE["right"]
+            if right == "-50%":
+                is_node_panel_open = False
+            elif right == "0":
+                is_node_panel_open = True
+            print("isNodePanelOpen: ")
+            print(is_node_panel_open)
+            if is_node_panel_open and not selectedNodeData:
+                # close it now
+                print("close it now")
+                print("selectedNodeData is empty")
+                print("stylesheet:")
+                print(NETWORK_STYLESHEET)
+                NODEPANEL_STYLE["right"] = "-50%"
+
+                #wenn man zu macht verschwindet der graf
+                for node in selectedNodesBackup:
+                    print("laaa")
+                    print(node)
+                    for elem in NETWORK_STYLESHEET:
+                        print(elem)
+                        if elem["selector"] == "." + node["id"]:
+                            print("update")
+                            print("x")
+                            elem["style"]["backgroundColor"] = "gray"
+                            print(elem["style"]["backgroundColor"])
+                            elem["style"]["content"] = 'data(label)'
+                            print(elem["style"]["content"])
+                            print(NETWORK_STYLESHEET)
+                for node in selectedNodesBackup:
+                    selectedNodesBackup.remove(node)
+                return NODEPANEL_STYLE, ["", dbc.Col(timeseries_chart, style=PLOT_CONTAINER)], NETWORK_STYLESHEET
+            else:
+                # open it now
+                print("open it now ")
+                print("selectedNodeData is not empty")
+                for node in selectedNodeData:
+                    selectedNodesBackup.append(node)
+                    print(node)
+                    is_first_call = True
+                    for el in NETWORK_STYLESHEET:
+                        if el["selector"] == "." + node["id"]:
+                            is_first_call = False
+                            el["style"]["backgroundColor"] = "lightgray"
+                            el["style"]["content"] = 'data(label)'
+                    if is_first_call:
+                        NETWORK_STYLESHEET.append({
+                            "selector": "." + node["id"],
+                            "style": {
+                                "backgroundColor": "lightgray",
+                                'content': 'data(label)'
+                            }
+                        })
+
+            print(NETWORK_STYLESHEET)
+            NODEPANEL_STYLE["right"] = "0"
+
+            return NODEPANEL_STYLE, [selectedNodeData[0]["label"], dbc.Col(timeseries_chart, style=PLOT_CONTAINER)], NETWORK_STYLESHEET
+
 
     app.run_server(debug=True)
 
