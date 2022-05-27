@@ -1,0 +1,39 @@
+.networkContainer {
+    height: 100%;
+    width: 100%;
+    /*backgroundColor: rgba(239, 239, 239, 1);*/
+    margin-top:45px;
+    padding:20px
+
+}
+
+.header {
+    padding: 10px;
+    margin: 10px;
+    background-color: rgba(239, 239, 239, 1);
+    position: absolute;
+    z-index: 10;
+}
+.childrenContainer {
+    height: 100vh;
+    background-color: rgba(239, 239, 239, 1);
+
+}
+.selectButton {
+    padding: 15px;
+    width: 150px;
+    margin: 10px;
+    background-color: white;
+    position: absolute;
+    z-index: 10;
+    top: 40px;
+    left: 10px;
+    border-radius: 50px;
+    font-size: larger;
+    border: 3px #A2C2C2 solid;
+    color: #A2C2C2;
+}
+.selectButton:hover {
+    background-color: #A2C2C2 !important;
+    color:white !important;
+}
