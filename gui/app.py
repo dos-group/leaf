@@ -48,7 +48,8 @@ NETWORK_STYLESHEET = [
             'content': 'data(label)',
             'backgroundColor': "black",
             'width': "10px",
-            'height': "10px",
+            'height': "10px"
+
         }
     }
 ]
@@ -65,6 +66,37 @@ NODEPANEL_STYLE = {
     "color": "white",
     "padding": "20px",
     "overflow": "hidden"
+
+}
+
+SELECT_BUTTON = {
+    "padding": "15px",
+    "width": "150px",
+    "margin": "10px",
+    "backgroundColor": "white",
+    "position": "absolute",
+    "zIndex": "10",
+    "top": "40px",
+    "left": "10px",
+    "borderRadius": "50px",
+    "fontSize": "larger",
+    "border": "3px #A2C2C2 solid",
+    "color": "#A2C2C2",
+}
+
+DESELECT_BUTTON = {
+    "padding": "15px",
+    "width": "150px",
+    "margin": "10px",
+    "backgroundColor": "black",
+    "position": "absolute",
+    "zIndex": "10",
+    "top": "40px",
+    "left": "10px",
+    "borderRadius": "50px",
+    "fontSize": "larger",
+    "border": "3px #A2C2C2 solid",
+    "color": "#A2C2C2",
 
 }
 
@@ -160,6 +192,17 @@ def get_selectable_nodes():
         helper_list.append(elem)
     return list(dict.fromkeys(helper_list))
 
+def select_all(list):
+    for elem in list:
+        NETWORK_STYLESHEET.append({
+            "selector": "." + elem,
+            "style": {
+                "backgroundColor": "#ABE8E8",
+                'content': 'data(label)',
+                'width': "60px",
+                'height': "60px",
+            }
+        })
 
 def highlight_selectable_nodes():
     for nodeID in get_selectable_nodes():
@@ -168,8 +211,8 @@ def highlight_selectable_nodes():
             "style": {
                 "backgroundColor": "#ABE8E8",
                 'content': 'data(label)',
-                'width': "50px",
-                'height': "50px"
+                'width': "60px",
+                'height': "60px",
             }
         })
 
@@ -179,16 +222,20 @@ config, infrastructure, node_measurements, link_measurements = load_data("../exa
 
 def main():
     # https://dash.plotly.com/cytoscape/reference
+    print("test")
     print(get_selectable_nodes())
-
+    print(infrastructure_to_cyto_dict(infrastructure["100"]))
     highlight_selectable_nodes()
 
     network = cyto.Cytoscape(
-        layout=config["cytoscape_layout"],
+        #layout=config["cytoscape_layout"],
+        layout={
+            'name': 'breadthfirst'
+        },
         elements=infrastructure_to_cyto_dict(infrastructure["100"]),
         style=NETWORK_STYLE,
         maxZoom=10,
-        minZoom=0.5,
+        minZoom=0.2,
         stylesheet=NETWORK_STYLESHEET,
 
     )
@@ -220,34 +267,42 @@ def main():
     app.layout = html.Div([
         node_panel,
         dbc.Row([
-            dbc.Col(html.H5(children=["LEAF GUI v0.1"], className='header')),
+            dbc.Col(html.H5(children=[""], className='header')),
         ], style={"backgroundColor": "rgba(239, 239, 239, 1)"}),
-        html.Button('Select all', className="selectButton"),
+        html.Button(children=['Select all'], id="select", className="selectButton", n_clicks=0, style=SELECT_BUTTON),
 
 
         dbc.Row([
             dbc.Col(html.Div(network, className='networkContainer')),
         ], className='childrenContainer')
-    ], style={"overflow": "hidden"})
+    ], id="wrapperDiv", style={"overflow": "hidden"})
 
     last_plot: [] = [None]
     @app.callback(
         Output(timeseries_chart, component_property='figure'),
-        Input(network, component_property='selectedNodeData')  # tapNodeData
+        Output('select', 'children'),
+        Output('select','style'),
+        Input(network, component_property='selectedNodeData'),  # tapNodeData
+        Input('select', 'n_clicks'),
     )
-    def update_plot(input_value):
+    def update_plot(input_value, n_clicks):
+        print("update plot")
         print(input_value)
+        if input_value is None and n_clicks is not None:
+
+            if n_clicks > 0:
+                return power_fig(node_measurements, get_selectable_nodes()), ['Deselect all'], DESELECT_BUTTON
         if input_value is None:
             print("nothing selected")
-            return {}
+            return {}, ["Select all"], SELECT_BUTTON
         else:
             print("graf")
             if not input_value:
                 print("dont update")
-                return power_fig(node_measurements, last_plot[0])
+                return power_fig(node_measurements, last_plot[0]), ['Deselect all'],DESELECT_BUTTON
             else:
                 last_plot[0] = [el["id"] for el in input_value]
-                return power_fig(node_measurements, last_plot[0])
+                return power_fig(node_measurements, last_plot[0]),  ['Deselect all'],DESELECT_BUTTON
 
     def is_node_selectable(selectednodedata):
         if selectednodedata[0]["id"] in get_selectable_nodes():
@@ -257,7 +312,6 @@ def main():
 
     def close_node_panel():
         NODEPANEL_STYLE["right"] = "-50%"
-
 
     def open_node_panel():
         NODEPANEL_STYLE["right"] = "0"
@@ -272,46 +326,89 @@ def main():
     selected_nodes_backup: [] = []
 
     def reset_dash_nodes():
-        for node in selected_nodes_backup:
+        for nodeID in selected_nodes_backup:
             for elem in NETWORK_STYLESHEET:
-                if elem["selector"] == "." + node["id"]:
+                if elem["selector"] == "." + nodeID:
                     elem["style"]["backgroundColor"] = "#ABE8E8"
                     elem["style"]["content"] = 'data(label)'
-                    elem["style"]["width"] = '50px'
-                    elem["style"]["height"] = '50px'
-        for node in selected_nodes_backup:
-            selected_nodes_backup.remove(node)
+                    elem["style"]["width"] = '60px'
+                    elem["style"]["height"] = '60px'
+        for nodeID in selected_nodes_backup:
+            selected_nodes_backup.remove(nodeID)
 
     def set_selected_nodes(selected_node_data):
-        for node in selected_node_data:
-            selected_nodes_backup.append(node)
+        for nodeID in selected_node_data:
+            selected_nodes_backup.append(nodeID)
             is_first_call = True
             for el in NETWORK_STYLESHEET:
-                if el["selector"] == "." + node["id"]:
+                if el["selector"] == "." + nodeID:
                     is_first_call = False
                     el["style"]["backgroundColor"] = "#A2C2C2"
                     el["style"]["content"] = 'data(label)'
-                    el["style"]["width"] = '50px'
-                    el["style"]["height"] = '50px'
-            if is_first_call:
+                    el["style"]["width"] = '60px'
+                    el["style"]["height"] = '60px'
+
+        if is_first_call:
                 NETWORK_STYLESHEET.append({
-                    "selector": "." + node["id"],
+                    "selector": "." + nodeID,
                     "style": {
                         "backgroundColor": "#A2C2C2",
                         'content': 'data(label)',
-                        'width': "50px",
-                        'height': "50px"
+                        'width': "60px",
+                        'height': "60px",
                     }
                 })
 
     last_selected_node_content: [] = [None]
+    n_clicks_backup = [0]
     @app.callback(
         Output(node_panel, 'style'),
         Output(node_panel, "children"),
         Output(network, "stylesheet"),
         Input(network, component_property='selectedNodeData'),  # tapNodeData
+        Input('select', 'n_clicks'),
     )
-    def update_nodePanel(selectedNodeData):
+    def update_nodePanel(selectedNodeData, n_clicks):
+        print("akjsdaklsdjaslkdjaskljd")
+        print(n_clicks)
+        print(n_clicks_backup[0])
+
+        # n_clicks_backup[0] += 1
+        # if n_clicks_backup[0] == n_clicks:
+        #     print("clicked")
+        # else:
+        #     n_clicks_backup[0] -= 1
+        #     print("not clicked button")
+        # print(n_clicks_backup[0])
+
+        #nichts wurde selektiert aber der button wurde geklickt
+        if selectedNodeData is None and n_clicks is not None:
+
+            close_node_panel()
+            print("n_clicks update nodepanel")
+            print(selectedNodeData)
+            #wenn der button geklickt wurde
+            if n_clicks > 0:
+                print("button clicked")
+                #passe den style aller selektierbaren nodes an
+                set_selected_nodes(get_selectable_nodes())
+                #speichere deren ids im chart
+                x = ', '.join([el for el in get_selectable_nodes()])
+
+                print(last_selected_node_content)
+                #öffne den panel
+                open_node_panel()
+                #
+                return NODEPANEL_STYLE, [x, dbc.Col(timeseries_chart, style=PLOT_CONTAINER), node_info], NETWORK_STYLESHEET
+            else:
+                if is_node_panel_open() and not selectedNodeData and n_clicks is None:
+                    close_node_panel()
+        #button wurde nicht geklickt
+        else:
+            if is_node_panel_open() and not selectedNodeData and n_clicks is None:
+                close_node_panel()
+                print("button not clicked")
+
         reset_dash_nodes()
         if selectedNodeData is None:
             #selected is None
@@ -332,14 +429,12 @@ def main():
                 else:
                     last_selected_node_content[0] = ', '.join([el["id"] for el in selectedNodeData])
 
-                    set_selected_nodes(selectedNodeData)
+                    set_selected_nodes([el["id"] for el in selectedNodeData])
                     open_node_panel()
                     return NODEPANEL_STYLE, [ last_selected_node_content[0], dbc.Col(timeseries_chart, style=PLOT_CONTAINER) , node_info], NETWORK_STYLESHEET
             else:
                 # node is not selectable
                 print("node is not selectable")
-                close_node_panel()
-                return NODEPANEL_STYLE, "", NETWORK_STYLESHEET
 
     app.run_server(debug=True)
 

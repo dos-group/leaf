@@ -19,19 +19,23 @@
     background-color: rgba(239, 239, 239, 1);
 
 }
-.selectButton {
-    padding: 15px;
-    width: 150px;
-    margin: 10px;
-    background-color: white;
-    position: absolute;
-    z-index: 10;
-    top: 40px;
-    left: 10px;
-    border-radius: 50px;
-    font-size: larger;
-    border: 3px #A2C2C2 solid;
-    color: #A2C2C2;
+/*.selectButton {*/
+/*    padding: 15px;*/
+/*    width: 150px;*/
+/*    margin: 10px;*/
+/*    background-color: white;*/
+/*    position: absolute;*/
+/*    z-index: 10;*/
+/*    top: 40px;*/
+/*    left: 10px;*/
+/*    border-radius: 50px;*/
+/*    font-size: larger;*/
+/*    border: 3px #A2C2C2 solid;*/
+/*    color: #A2C2C2;*/
+/*}*/
+
+.clickedButton {
+
 }
 .selectButton:hover {
     background-color: #A2C2C2 !important;
