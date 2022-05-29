@@ -84,21 +84,7 @@ SELECT_BUTTON = {
     "color": "#A2C2C2",
 }
 
-GRAY_BUTTON = {
-    "padding": "15px",
-    "width": "150px",
-    "margin": "10px",
-    "backgroundColor": "gray",
-    "position": "absolute",
-    "zIndex": "10",
-    "top": "40px",
-    "left": "10px",
-    "borderRadius": "50px",
-    "fontSize": "larger",
-    "border": "3px #A2C2C2 solid",
-    "color": "#A2C2C2",
 
-}
 DESELECT_BUTTON = {
     "display":"none",
     "padding": "15px",
@@ -108,7 +94,7 @@ DESELECT_BUTTON = {
     "position": "absolute",
     "zIndex": "10",
     "top": "40px",
-    "left": "170px",
+    "left": "10px",
     "borderRadius": "50px",
     "fontSize": "larger",
     "border": "3px #A2C2C2 solid",
@@ -285,7 +271,7 @@ def main():
             dbc.Col(html.H5(children=[""], className='header')),
         ], style={"backgroundColor": "rgba(239, 239, 239, 1)"}, id="headerID"),
         html.Button(children=['Select all'], id="select", className="selectButton", n_clicks=0, style=SELECT_BUTTON),
-        html.Button(children=['Deselect all'], id="deselect", n_clicks=0, style=DESELECT_BUTTON),
+        html.Button(children=['Deselect all'], id="deselect", className="deselectButton",n_clicks=0, style=DESELECT_BUTTON),
 
 
         dbc.Row([
@@ -300,18 +286,26 @@ def main():
         Output('deselect', 'style'),
         Input(network, component_property='selectedNodeData'),  # tapNodeData
         Input('select', 'n_clicks'),
+        Input('deselect', 'n_clicks')
         #wenn auf deselect geklickt wird
     )
-    def update_plot(input_value, n_clicks_select):
+    def update_plot(input_value, n_clicks_select, n_clicks_deselect):
         print("update plot")
         print(input_value)
-        SELECT_BUTTON["backgroundColor"] = "white"
+        SELECT_BUTTON["display"] = "block"
+        if n_clicks_deselect > 0 :
+            print("deselect")
+            DESELECT_BUTTON["display"] = "none"
+            SELECT_BUTTON["display"] = "block"
+            return power_fig(node_measurements, get_selectable_nodes()), SELECT_BUTTON, DESELECT_BUTTON
+
         if (input_value is None or not input_value) and n_clicks_select is not None:
             if n_clicks_select > 0:
                 print("return A")
-                SELECT_BUTTON["backgroundColor"] = "gray"
+                SELECT_BUTTON["display"] = "none"
                 DESELECT_BUTTON["display"] = "block"
                 return power_fig(node_measurements, get_selectable_nodes()), SELECT_BUTTON, DESELECT_BUTTON
+
         DESELECT_BUTTON["display"] = "none"
 
         if input_value is None:
@@ -323,9 +317,13 @@ def main():
                 print("dont update")
                 return power_fig(node_measurements, last_plot[0]), SELECT_BUTTON, DESELECT_BUTTON
             else:
-                if input_value[0]["id"] in get_selectable_nodes():
-                    last_plot[0] = [el["id"] for el in input_value]
-                    return power_fig(node_measurements, last_plot[0]), SELECT_BUTTON, DESELECT_BUTTON
+                if is_node_panel_open():
+                    if input_value[0]["id"] in get_selectable_nodes():
+                        last_plot[0] = [el["id"] for el in input_value]
+                        return power_fig(node_measurements, last_plot[0]), SELECT_BUTTON, DESELECT_BUTTON
+                    else:
+                        return power_fig(node_measurements, last_plot[0]), SELECT_BUTTON, DESELECT_BUTTON
+
                 else:
                     return power_fig(node_measurements, []), SELECT_BUTTON, DESELECT_BUTTON
 
@@ -392,20 +390,30 @@ def main():
         Output(network, "stylesheet"),
         Input(network, component_property='selectedNodeData'),  # tapNodeData
         Input('select', 'n_clicks'),
+        Input('deselect', 'n_clicks')
     )
-    def update_nodePanel(selectedNodeData, n_clicks):
+    def update_nodePanel(selectedNodeData, n_clicks_select, n_clicks_deselect):
         print("akjsdaklsdjaslkdjaskljd")
-        print(n_clicks)
+        print(n_clicks_select)
         print(n_clicks_backup[0])
+        #n_clicks_select muss ungerade sein
+        if n_clicks_deselect > 0 and n_clicks_select %2 != 0:
+            reset_dash_nodes()
+            close_node_panel()
+            x = ', '.join([el for el in get_selectable_nodes()])
+
+            return NODEPANEL_STYLE, [x, dbc.Col(timeseries_chart, style=PLOT_CONTAINER), node_info], NETWORK_STYLESHEET
+
 
         #nichts wurde selektiert aber der button wurde geklickt
-        if (selectedNodeData is None or not selectedNodeData) and n_clicks is not None:
-
+        if (selectedNodeData is None or not selectedNodeData ) and n_clicks_select is not None:
+            reset_dash_nodes()
             close_node_panel()
             print("n_clicks update nodepanel")
             print(selectedNodeData)
             #wenn der button geklickt wurde
-            if n_clicks > 0:
+            if n_clicks_select > 0 :
+
                 print("button clicked")
                 #passe den style aller selektierbaren nodes an
                 set_selected_nodes(get_selectable_nodes())
@@ -422,11 +430,11 @@ def main():
 
         #button wurde nicht geklickt
         else:
-            if is_node_panel_open() and not selectedNodeData and n_clicks is None:
+            if is_node_panel_open() and not selectedNodeData and n_clicks_select is None:
                 close_node_panel()
                 print("button not clicked")
 
-            reset_dash_nodes()
+                reset_dash_nodes()
             if selectedNodeData is None:
                 #selected is None
                 close_node_panel()
@@ -450,9 +458,13 @@ def main():
                         open_node_panel()
                         return NODEPANEL_STYLE, [ last_selected_node_content[0], dbc.Col(timeseries_chart, style=PLOT_CONTAINER) , node_info], NETWORK_STYLESHEET
                 else:
+                    if is_node_panel_open():
+                        return NODEPANEL_STYLE, [last_selected_node_content[0], dbc.Col(timeseries_chart, style=PLOT_CONTAINER),  node_info], NETWORK_STYLESHEET
+
                     # node is not selectable
-                    print("node is not selectable")
-                    return NODEPANEL_STYLE, [ last_selected_node_content[0], dbc.Col(timeseries_chart, style=PLOT_CONTAINER) , node_info], NETWORK_STYLESHEET
+                    else:
+                        print("node is not selectable")
+                        return NODEPANEL_STYLE, [last_selected_node_content[0], dbc.Col(timeseries_chart, style=PLOT_CONTAINER) , node_info], NETWORK_STYLESHEET
 
     app.run_server(debug=True)
 
