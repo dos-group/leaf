@@ -260,7 +260,7 @@ def main():
 
          dbc.Row(
              timeseries_chart, className='plotContainer', style=PLOT_CONTAINER, id="test"
-        
+
          ),
          node_info
     ], style=NODEPANEL_STYLE, id="nodepanelID")
@@ -290,20 +290,39 @@ def main():
         #wenn auf deselect geklickt wird
     )
     def update_plot(input_value, n_clicks_select, n_clicks_deselect):
+
+        print()
+        print()
+        print()
         print("update plot")
+        print(callback_list)
         print(input_value)
         SELECT_BUTTON["display"] = "block"
-        if n_clicks_deselect > 0 :
-            print("deselect")
-            DESELECT_BUTTON["display"] = "none"
-            SELECT_BUTTON["display"] = "block"
-            return power_fig(node_measurements, get_selectable_nodes()), SELECT_BUTTON, DESELECT_BUTTON
+        print(n_clicks_deselect)
 
-        if (input_value is None or not input_value) and n_clicks_select is not None:
-            if n_clicks_select > 0:
+        #deselect callback
+        # if n_clicks_deselect[0] == n_clicks_deselect_backup[0]:
+        #     if all([x == True for x in callback_list]):
+        #         n_clicks_deselect[0] += 1
+        #         callback_list[0] = False
+        #         callback_list[1] = False
+        #
+        #     print("deselect")
+        #     DESELECT_BUTTON["display"] = "none"
+        #     SELECT_BUTTON["display"] = "block"
+        #     return power_fig(node_measurements, get_selectable_nodes()), SELECT_BUTTON, DESELECT_BUTTON
+
+        if (input_value is None or not input_value) and n_clicks_select != 0:
+            if n_clicks_select == n_clicks_select_backup[0]:
+                callback_list[1] = True
+                if callback_list[0] is True and callback_list[1] is True:
+                    n_clicks_select_backup[0] += 1
+                    callback_list[0] = False
+                    callback_list[1] = False
                 print("return A")
                 SELECT_BUTTON["display"] = "none"
                 DESELECT_BUTTON["display"] = "block"
+                last_plot[0] = [el for el in get_selectable_nodes()]
                 return power_fig(node_measurements, get_selectable_nodes()), SELECT_BUTTON, DESELECT_BUTTON
 
         DESELECT_BUTTON["display"] = "none"
@@ -318,6 +337,17 @@ def main():
                 return power_fig(node_measurements, last_plot[0]), SELECT_BUTTON, DESELECT_BUTTON
             else:
                 if is_node_panel_open():
+                    #update graf nachdem man einen node angeklickt hat und danach button geklickt hat
+                    #in input value steht der zuletzt geklickte node
+                    if n_clicks_select == n_clicks_select_backup[0]:
+                        callback_list[1] = True
+                        if callback_list[0] is True and callback_list[1] is True:
+                            n_clicks_select_backup[0] += 1
+                            callback_list[0] = False
+                            callback_list[1] = False
+
+                        last_plot[0] = [el for el in get_selectable_nodes()]
+                        return power_fig(node_measurements, get_selectable_nodes()), SELECT_BUTTON, DESELECT_BUTTON
                     if input_value[0]["id"] in get_selectable_nodes():
                         last_plot[0] = [el["id"] for el in input_value]
                         return power_fig(node_measurements, last_plot[0]), SELECT_BUTTON, DESELECT_BUTTON
@@ -383,7 +413,11 @@ def main():
             })
 
     last_selected_node_content: [] = [None]
-    n_clicks_backup = [0]
+    n_clicks_select_backup = [1]
+    n_clicks_deselect_backup = [1]
+
+    callback_list: [] = [False, False]
+
     @app.callback(
         Output(node_panel, 'style'),
         Output(node_panel, "children"),
@@ -393,26 +427,45 @@ def main():
         Input('deselect', 'n_clicks')
     )
     def update_nodePanel(selectedNodeData, n_clicks_select, n_clicks_deselect):
-        print("akjsdaklsdjaslkdjaskljd")
-        print(n_clicks_select)
-        print(n_clicks_backup[0])
-        #n_clicks_select muss ungerade sein
-        if n_clicks_deselect > 0 and n_clicks_select %2 != 0:
-            reset_dash_nodes()
-            close_node_panel()
-            x = ', '.join([el for el in get_selectable_nodes()])
 
-            return NODEPANEL_STYLE, [x, dbc.Col(timeseries_chart, style=PLOT_CONTAINER), node_info], NETWORK_STYLESHEET
+        print()
+        print()
+        print()
+        print("update nodepanel")
+        print(callback_list)
+        print(n_clicks_select)
+        print(n_clicks_deselect)
+
+        #deselect callback
+        # if n_clicks_deselect[0] == n_clicks_deselect_backup[0]:
+        #     if all([x == True for x in callback_list]):
+        #         n_clicks_deselect[0] += 1
+        #         callback_list[0] = False
+        #         callback_list[1] = False
+        #
+        #     reset_dash_nodes()
+        #     close_node_panel()
+        #     x = ', '.join([el for el in get_selectable_nodes()])
+        #
+        #     return NODEPANEL_STYLE, [x, dbc.Col(timeseries_chart, style=PLOT_CONTAINER), node_info], NETWORK_STYLESHEET
 
 
         #nichts wurde selektiert aber der button wurde geklickt
-        if (selectedNodeData is None or not selectedNodeData ) and n_clicks_select is not None:
+        if (selectedNodeData is None or not selectedNodeData) and n_clicks_select != 0:
             reset_dash_nodes()
             close_node_panel()
             print("n_clicks update nodepanel")
             print(selectedNodeData)
             #wenn der button geklickt wurde
-            if n_clicks_select > 0 :
+
+            if n_clicks_select == n_clicks_select_backup[0]:
+                callback_list[0] = True
+                print()
+
+                if callback_list[0] is True and callback_list[1] is True:
+                    n_clicks_select_backup[0] += 1
+                    callback_list[0] = False
+                    callback_list[1] = False
 
                 print("button clicked")
                 #passe den style aller selektierbaren nodes an
@@ -430,11 +483,16 @@ def main():
 
         #button wurde nicht geklickt
         else:
-            if is_node_panel_open() and not selectedNodeData and n_clicks_select is None:
-                close_node_panel()
-                print("button not clicked")
+            # if is_node_panel_open() and not selectedNodeData:
+            #     close_node_panel()
+            #     print("button not clicked")
 
-                reset_dash_nodes()
+
+
+
+
+
+            reset_dash_nodes()
             if selectedNodeData is None:
                 #selected is None
                 close_node_panel()
@@ -443,8 +501,11 @@ def main():
                 # if nothing selected or node is selectable
                 if not selectedNodeData or is_node_selectable(selectedNodeData):
                     # if nodePanel is open and nothing selected
-                    if is_node_panel_open() and not selectedNodeData:
-                        close_node_panel()
+                    if is_node_panel_open():
+                        if n_clicks_select == n_clicks_select_backup[0]:
+                            last_selected_node_content[0] = ', '.join([el for el in get_selectable_nodes()])
+                        elif not selectedNodeData:
+                            close_node_panel()
                         print(selectedNodeData)
 
                         #wenn man zu macht verschwindet der graf
