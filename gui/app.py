@@ -60,7 +60,7 @@ NODEPANEL_STYLE = {
     "top": "0",
     "height": "100vh",
     "width": "50%",
-    "transition": "right 1000ms",
+    "transition": "all 1000ms",
     "backgroundColor": "#A2C2C2",
     "zIndex": "10000",
     "color": "white",
@@ -69,14 +69,14 @@ NODEPANEL_STYLE = {
 
 }
 
-SELECT_BUTTON = {
+SELECT_STYLE = {
     "padding": "15px",
     "width": "150px",
     "margin": "10px",
     "backgroundColor": "white",
     "position": "absolute",
     "zIndex": "10",
-    "top": "40px",
+    "top": "10px",
     "left": "10px",
     "borderRadius": "50px",
     "fontSize": "larger",
@@ -85,7 +85,7 @@ SELECT_BUTTON = {
 }
 
 
-DESELECT_BUTTON = {
+DESELECT_STYLE = {
     "display":"none",
     "padding": "15px",
     "width": "150px",
@@ -93,7 +93,7 @@ DESELECT_BUTTON = {
     "backgroundColor": "white",
     "position": "absolute",
     "zIndex": "10",
-    "top": "40px",
+    "top": "10px",
     "left": "10px",
     "borderRadius": "50px",
     "fontSize": "larger",
@@ -102,6 +102,18 @@ DESELECT_BUTTON = {
 
 }
 
+OVERLAY_STYLE = {
+    "position": "fixed",
+    "width": "100vw",
+    "height": "100vh",
+    "display": "none",
+    "top": "0",
+    "left": "0",
+    "right": "0",
+    "bottom": "0",
+    "backgroundColor": "rgba(0,0,0,0.5)",
+    "zIndex": "1"
+}
 
 
 template = {"layout": {"paper_bgcolor": bgcolor, "plot_bgcolor": bgcolor}}
@@ -180,7 +192,6 @@ def power_fig(node_measurements, node_ids: List[str]):
         ),
         plot_bgcolor='white',
         #paper_bgcolor="white"
-
     )
     fig.update_xaxes(showline=True, linewidth=1, linecolor='lightgray', gridcolor='lightgray')
     fig.update_yaxes(showline=True, linewidth=1, linecolor='lightgray', gridcolor='lightgray')
@@ -246,6 +257,7 @@ def main():
         maxZoom=10,
         minZoom=0.2,
         stylesheet=NETWORK_STYLESHEET,
+        id="network"
 
     )
 
@@ -256,7 +268,7 @@ def main():
 
     ], style=NODE_INFO)
 
-    node_panel = html.Div([
+    node_panel = html.Div(children=[
 
          dbc.Row(
              timeseries_chart, className='plotContainer', style=PLOT_CONTAINER, id="test"
@@ -265,13 +277,12 @@ def main():
          node_info
     ], style=NODEPANEL_STYLE, id="nodepanelID")
 
+    overlay = html.Div(id="overlay", style=OVERLAY_STYLE)
     app.layout = html.Div([
+        overlay,
         node_panel,
-        dbc.Row([
-            dbc.Col(html.H5(children=[""], className='header')),
-        ], style={"backgroundColor": "rgba(239, 239, 239, 1)"}, id="headerID"),
-        html.Button(children=['Select all'], id="select", className="selectButton", n_clicks=0, style=SELECT_BUTTON),
-        html.Button(children=['Deselect all'], id="deselect", className="deselectButton",n_clicks=0, style=DESELECT_BUTTON),
+        html.Button(children=['Select all'], id="select", className="selectButton", n_clicks=0, style=SELECT_STYLE),
+        html.Button(children=['Deselect all'], id="deselect", className="deselectButton",n_clicks=0, style=DESELECT_STYLE),
 
 
         dbc.Row([
@@ -280,82 +291,6 @@ def main():
     ],  style={"overflow": "hidden"}, id="applayoutID")
 
     last_plot: [] = [None]
-    @app.callback(
-        Output(timeseries_chart, component_property='figure'),
-        Output('select', 'style'),
-        Output('deselect', 'style'),
-        Input(network, component_property='selectedNodeData'),  # tapNodeData
-        Input('select', 'n_clicks'),
-        Input('deselect', 'n_clicks')
-        #wenn auf deselect geklickt wird
-    )
-    def update_plot(input_value, n_clicks_select, n_clicks_deselect):
-
-        print()
-        print()
-        print()
-        print("update plot")
-        print(callback_list)
-        print(input_value)
-        SELECT_BUTTON["display"] = "block"
-        print(n_clicks_deselect)
-
-        #deselect callback
-        # if n_clicks_deselect[0] == n_clicks_deselect_backup[0]:
-        #     if all([x == True for x in callback_list]):
-        #         n_clicks_deselect[0] += 1
-        #         callback_list[0] = False
-        #         callback_list[1] = False
-        #
-        #     print("deselect")
-        #     DESELECT_BUTTON["display"] = "none"
-        #     SELECT_BUTTON["display"] = "block"
-        #     return power_fig(node_measurements, get_selectable_nodes()), SELECT_BUTTON, DESELECT_BUTTON
-
-        if (input_value is None or not input_value) and n_clicks_select != 0:
-            if n_clicks_select == n_clicks_select_backup[0]:
-                callback_list[1] = True
-                if callback_list[0] is True and callback_list[1] is True:
-                    n_clicks_select_backup[0] += 1
-                    callback_list[0] = False
-                    callback_list[1] = False
-                print("return A")
-                SELECT_BUTTON["display"] = "none"
-                DESELECT_BUTTON["display"] = "block"
-                last_plot[0] = [el for el in get_selectable_nodes()]
-                return power_fig(node_measurements, get_selectable_nodes()), SELECT_BUTTON, DESELECT_BUTTON
-
-        DESELECT_BUTTON["display"] = "none"
-
-        if input_value is None:
-            print("nothing selected")
-            return power_fig(node_measurements, []), SELECT_BUTTON, DESELECT_BUTTON
-        else:
-            print("graf")
-            if not input_value:
-                print("dont update")
-                return power_fig(node_measurements, last_plot[0]), SELECT_BUTTON, DESELECT_BUTTON
-            else:
-                if is_node_panel_open():
-                    #update graf nachdem man einen node angeklickt hat und danach button geklickt hat
-                    #in input value steht der zuletzt geklickte node
-                    if n_clicks_select == n_clicks_select_backup[0]:
-                        callback_list[1] = True
-                        if callback_list[0] is True and callback_list[1] is True:
-                            n_clicks_select_backup[0] += 1
-                            callback_list[0] = False
-                            callback_list[1] = False
-
-                        last_plot[0] = [el for el in get_selectable_nodes()]
-                        return power_fig(node_measurements, get_selectable_nodes()), SELECT_BUTTON, DESELECT_BUTTON
-                    if input_value[0]["id"] in get_selectable_nodes():
-                        last_plot[0] = [el["id"] for el in input_value]
-                        return power_fig(node_measurements, last_plot[0]), SELECT_BUTTON, DESELECT_BUTTON
-                    else:
-                        return power_fig(node_measurements, last_plot[0]), SELECT_BUTTON, DESELECT_BUTTON
-
-                else:
-                    return power_fig(node_measurements, []), SELECT_BUTTON, DESELECT_BUTTON
 
     def is_node_selectable(selectednodedata):
         if selectednodedata[0]["id"] in get_selectable_nodes():
@@ -412,6 +347,30 @@ def main():
                 }
             })
 
+    def show_element(style, show):
+        show_str = "none"
+        if show:
+            show_str = "block"
+        style["display"] = show_str
+
+    def button_clicked(click_backup, is_select):
+        click_backup[0] += 1
+        reset_dash_nodes()
+        NODEPANEL_STYLE["width"] = "75%"
+        if is_select:
+            open_node_panel()
+            show_element(OVERLAY_STYLE, True)
+            set_selected_nodes(get_selectable_nodes())
+        else:
+            NODEPANEL_STYLE["right"] = "-75%"
+            show_element(OVERLAY_STYLE, False)
+        last_selected_node_content[0] = ', '.join([el for el in get_selectable_nodes()])
+        node_panel_children = [last_selected_node_content[0], dbc.Row(timeseries_chart, style=PLOT_CONTAINER), node_info]
+        timeseries_chart_nodes = get_selectable_nodes()
+        show_element(SELECT_STYLE, not is_select)
+        show_element(DESELECT_STYLE, is_select)
+        last_plot[0] = timeseries_chart_nodes
+        return node_panel_children, timeseries_chart_nodes
     last_selected_node_content: [] = [None]
     n_clicks_select_backup = [1]
     n_clicks_deselect_backup = [1]
@@ -419,113 +378,83 @@ def main():
     callback_list: [] = [False, False]
 
     @app.callback(
+        Output(network, "tapNodeData"),
+        Input("deselect", "n_clicks")
+    )
+    def trigger_update_click_again(n_clicks):
+        if n_clicks == 0:
+            return None
+        return {"triggerHelper": True}
+
+    @app.callback(
         Output(node_panel, 'style'),
         Output(node_panel, "children"),
+        Output(timeseries_chart, component_property='figure'),
         Output(network, "stylesheet"),
-        Input(network, component_property='selectedNodeData'),  # tapNodeData
-        Input('select', 'n_clicks'),
-        Input('deselect', 'n_clicks')
+        Output("select", "style"),
+        Output("deselect", "style"),
+        Output("overlay", "style"),
+        Input(network, component_property='selectedNodeData'),
+        Input("select", "n_clicks"),
+        Input("deselect", "n_clicks"),
+        Input(network, "tapNodeData"),
     )
-    def update_nodePanel(selectedNodeData, n_clicks_select, n_clicks_deselect):
+    def update_click(selectedNodeData, n_clicks_select, n_clicks_deselect, tapNodeData):
+        NODEPANEL_STYLE["width"] = "50%"
+        node_panel_children = ["", dbc.Col(timeseries_chart, style=PLOT_CONTAINER), node_info]
+        timeseries_chart_nodes = []
+        timeseries_chart_figure = None
+        select_button_clicked = False
+        deselect_button_clicked = False
+        reset_dash_nodes()
+        add = True if not selectedNodeData or selectedNodeData is None else False
+        # auf select button geklickt
+        if n_clicks_select == n_clicks_select_backup[0]:
+            select_button_clicked = True
 
-        print()
-        print()
-        print()
-        print("update nodepanel")
-        print(callback_list)
-        print(n_clicks_select)
-        print(n_clicks_deselect)
+            node_panel_children, timeseries_chart_nodes = button_clicked(n_clicks_select_backup, True)
+            timeseries_chart_figure = power_fig(node_measurements, timeseries_chart_nodes)
 
-        #deselect callback
-        # if n_clicks_deselect[0] == n_clicks_deselect_backup[0]:
-        #     if all([x == True for x in callback_list]):
-        #         n_clicks_deselect[0] += 1
-        #         callback_list[0] = False
-        #         callback_list[1] = False
-        #
-        #     reset_dash_nodes()
-        #     close_node_panel()
-        #     x = ', '.join([el for el in get_selectable_nodes()])
-        #
-        #     return NODEPANEL_STYLE, [x, dbc.Col(timeseries_chart, style=PLOT_CONTAINER), node_info], NETWORK_STYLESHEET
+        # auf deselect button geklickt
+        if n_clicks_deselect == n_clicks_deselect_backup[0]:
+            deselect_button_clicked = True
+            node_panel_children, timeseries_chart_nodes = button_clicked(n_clicks_deselect_backup, False)
+            timeseries_chart_figure = power_fig(node_measurements, timeseries_chart_nodes)
 
-
-        #nichts wurde selektiert aber der button wurde geklickt
-        if (selectedNodeData is None or not selectedNodeData) and n_clicks_select != 0:
-            reset_dash_nodes()
-            close_node_panel()
-            print("n_clicks update nodepanel")
-            print(selectedNodeData)
-            #wenn der button geklickt wurde
-
-            if n_clicks_select == n_clicks_select_backup[0]:
-                callback_list[0] = True
-                print()
-
-                if callback_list[0] is True and callback_list[1] is True:
-                    n_clicks_select_backup[0] += 1
-                    callback_list[0] = False
-                    callback_list[1] = False
-
-                print("button clicked")
-                #passe den style aller selektierbaren nodes an
-                set_selected_nodes(get_selectable_nodes())
-                #speichere deren ids im chart
-                x = ', '.join([el for el in get_selectable_nodes()])
-
-                print(last_selected_node_content)
-                #öffne den panel
-                open_node_panel()
-                #
-                return NODEPANEL_STYLE, [x, dbc.Col(timeseries_chart, style=PLOT_CONTAINER), node_info], NETWORK_STYLESHEET
-            else:
-                return NODEPANEL_STYLE, [last_selected_node_content[0], dbc.Col(timeseries_chart, style=PLOT_CONTAINER),  node_info], NETWORK_STYLESHEET
-
-        #button wurde nicht geklickt
-        else:
-            # if is_node_panel_open() and not selectedNodeData:
-            #     close_node_panel()
-            #     print("button not clicked")
-
-
-
-
-
-
-            reset_dash_nodes()
-            if selectedNodeData is None:
-                #selected is None
+        if select_button_clicked or deselect_button_clicked:
+            return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
+                    DESELECT_STYLE, OVERLAY_STYLE]
+        if selectedNodeData is None:
+            if not select_button_clicked:
                 close_node_panel()
-                return NODEPANEL_STYLE, "", NETWORK_STYLESHEET
-            else:
-                # if nothing selected or node is selectable
-                if not selectedNodeData or is_node_selectable(selectedNodeData):
-                    # if nodePanel is open and nothing selected
-                    if is_node_panel_open():
-                        if n_clicks_select == n_clicks_select_backup[0]:
-                            last_selected_node_content[0] = ', '.join([el for el in get_selectable_nodes()])
-                        elif not selectedNodeData:
-                            close_node_panel()
-                        print(selectedNodeData)
+        else:
+            show_element(SELECT_STYLE, True)
+            show_element(DESELECT_STYLE, False)
+            # liste ist leer
+            if not selectedNodeData:
+                close_node_panel()
+                timeseries_chart_nodes = last_plot[0]
+                node_panel_children = [last_selected_node_content[0], dbc.Row(timeseries_chart, style=PLOT_CONTAINER), node_info]
 
-                        #wenn man zu macht verschwindet der graf
-                        return NODEPANEL_STYLE, [last_selected_node_content[0], dbc.Col(timeseries_chart, style=PLOT_CONTAINER),  node_info], NETWORK_STYLESHEET
-
-                    # nodePanel is closed and needs to be open
-                    else:
-                        last_selected_node_content[0] = ', '.join([el["id"] for el in selectedNodeData])
-
-                        set_selected_nodes([el["id"] for el in selectedNodeData])
-                        open_node_panel()
-                        return NODEPANEL_STYLE, [ last_selected_node_content[0], dbc.Col(timeseries_chart, style=PLOT_CONTAINER) , node_info], NETWORK_STYLESHEET
-                else:
-                    if is_node_panel_open():
-                        return NODEPANEL_STYLE, [last_selected_node_content[0], dbc.Col(timeseries_chart, style=PLOT_CONTAINER),  node_info], NETWORK_STYLESHEET
-
-                    # node is not selectable
-                    else:
-                        print("node is not selectable")
-                        return NODEPANEL_STYLE, [last_selected_node_content[0], dbc.Col(timeseries_chart, style=PLOT_CONTAINER) , node_info], NETWORK_STYLESHEET
+            # selected liste ist nicht leer und node is selectable
+            if selectedNodeData and is_node_selectable(selectedNodeData):
+                last_selected_node_content[0] = ', '.join([el["id"] for el in selectedNodeData])
+                set_selected_nodes([el["id"] for el in selectedNodeData])
+                node_panel_children = [last_selected_node_content[0], dbc.Row(timeseries_chart, style=PLOT_CONTAINER), node_info]
+                timeseries_chart_nodes = [el["id"] for el in selectedNodeData]
+                last_plot[0] = timeseries_chart_nodes
+                open_node_panel()
+            # geklickter node ist nicht selektierbar
+            if selectedNodeData and not is_node_selectable(selectedNodeData):
+                last_selected_nodes_id_list = last_plot[0]
+                if last_selected_nodes_id_list is not None and is_node_panel_open():
+                    set_selected_nodes(last_selected_nodes_id_list)
+                    node_panel_children = [last_selected_node_content[0], dbc.Row(timeseries_chart, style=PLOT_CONTAINER), node_info]
+                    timeseries_chart_nodes = last_plot[0]
+                    open_node_panel()
+        timeseries_chart_figure = power_fig(node_measurements, timeseries_chart_nodes)
+        return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
+                DESELECT_STYLE, OVERLAY_STYLE]
 
     app.run_server(debug=True)
 
