@@ -7,7 +7,15 @@ import dash_cytoscape as cyto
 import pandas as pd
 from dash import Input, Output, dcc, html
 import plotly.graph_objs as go
+import plotly.express as px
+
+import dash_core_components as dcc
+
+import plotly.io as pio
 from plotly.subplots import make_subplots
+import numpy as np
+
+
 
 # Colors
 bgcolor = "#f3f3f1"  # mapbox light map land color
@@ -19,26 +27,29 @@ bar_unselected_opacity = 0.8
 
 #colors = ['rgb(127, 166, 238)', 'rgb(184, 247, 212)', 'rgb(184, 247, 212)', 'rgb(131, 90, 241)', "#DBF227"]
 
-
 PLOT_CONTAINER = {
     "borderRadius": "10px",
     "background": "white",
-    "padding": "3px",
-
+    "padding": "5px",
+    "margin":"5px",
+    "fontFamiliy":"Avenir",
+    "filter": "drop-shadow(5px 5px 5px #808080)",
 }
 
 NODE_INFO = {
-    "borderRadius": "10px",
+    "fontFamiliy":"Avenir",
+    "borderRadius": "15px",
     "background": "white",
-    "marginTop": "10px",
-    "padding": "10px"
+    "filter": "drop-shadow(5px 5px 5px #808080)",
+    "padding": "8px",
+    "margin":"5px"
 
 }
 
 NETWORK_STYLE = {
     "width": "100%",
     "height": "100%",
-    "backgroundColor": "rgba(239, 239, 239, 1)",
+    "backgroundColor": "linear-gradient(rgba(255, 255, 255, 1), rgba(118, 118, 118, 1))",
 }
 
 NETWORK_STYLESHEET = [
@@ -64,13 +75,13 @@ NODEPANEL_STYLE = {
     "backgroundColor": "#A2C2C2",
     "zIndex": "10000",
     "color": "white",
-    "padding": "20px",
-    "overflow": "hidden"
+    "padding": "25px",
+    "overflow": "hidden",
 
 }
 
 SELECT_STYLE = {
-    "padding": "15px",
+    "padding": "10px",
     "width": "150px",
     "margin": "10px",
     "backgroundColor": "white",
@@ -79,7 +90,6 @@ SELECT_STYLE = {
     "top": "10px",
     "left": "10px",
     "borderRadius": "50px",
-    "fontSize": "larger",
     "border": "3px #A2C2C2 solid",
     "color": "#A2C2C2",
 }
@@ -87,7 +97,7 @@ SELECT_STYLE = {
 
 DESELECT_STYLE = {
     "display":"none",
-    "padding": "15px",
+    "padding": "10px",
     "width": "150px",
     "margin": "10px",
     "backgroundColor": "white",
@@ -96,7 +106,6 @@ DESELECT_STYLE = {
     "top": "10px",
     "left": "10px",
     "borderRadius": "50px",
-    "fontSize": "larger",
     "border": "3px #A2C2C2 solid",
     "color": "#A2C2C2",
 
@@ -115,6 +124,19 @@ OVERLAY_STYLE = {
     "zIndex": "1"
 }
 
+NODE_NAMES_STYLE = {
+    "fontFamiliy" : "Avenir",
+    "filter": "drop-shadow(5px 5px 5px #808080)",
+    "margin": "5px",
+    "color": "black",
+    "fontSize": "large",
+    "border": "2px solid white",
+    "borderRadius": "15px",
+    "width": "max-content",
+    "padding": "8px",
+    "backgroundColor": "white"
+}
+
 
 template = {"layout": {"paper_bgcolor": bgcolor, "plot_bgcolor": bgcolor}}
 
@@ -130,8 +152,6 @@ def load_data(basedir):
     with open(f"{basedir}/infrastructure.json", "r") as f:
         infrastructure = json.load(f)
     node_measurements = pd.read_csv(f"{basedir}/node_measurements.csv")
-    print("node_measurements")
-    print(node_measurements)
     link_measurements = pd.read_csv(f"{basedir}/link_measurements.csv")
     return config, infrastructure, node_measurements, link_measurements
 
@@ -140,7 +160,7 @@ def infrastructure_to_cyto_dict(infrastructure):
     elements = []
     for node in infrastructure["nodes"]:
         if "x" in node and "y" in node:
-            position = {'x': node["x"] * 1.25, 'y': (node["y"]*2) * 1.3}
+            position = {'x': node["x"] , 'y': node["y"] }
         else:
             position = {'x': 0, 'y': 0}
         elements.append({
@@ -171,30 +191,40 @@ def blank_fig(height):
         },
     }
 
+init_colors = ["#ffffff", "#000000", "#00FFFF", "#01FFFF","#A52A2A","#8A2BE2"]
 
 def power_fig(node_measurements, node_ids: List[str]):
     df = node_measurements.pivot(index='time', columns='id', values=["static_power", "dynamic_power"])
     df.columns = df.columns.swaplevel()
+    print(px.colors.qualitative.Plotly)
 
     fig = go.Figure()
     for node_id in node_ids:
         node_df = df[node_id]
-        fig.add_trace(go.Scatter(x=node_df.index, y=node_df["static_power"], name=node_id + " Static power", stackgroup='one'))
-        fig.add_trace(go.Scatter(x=node_df.index, y=node_df["dynamic_power"],  name=node_id + " Dynamic power", stackgroup='one'))
+        fig.add_trace(go.Scatter(x=node_df.index, y=node_df["static_power"], name=node_id + " Static power", line_width=1 ))
+        fig.add_trace(go.Scatter(x=node_df.index, y=node_df["dynamic_power"],  name=node_id + " Dynamic power",  line_width=1))
+
+
     fig.update_layout(
         title=f"Power usage: {', '.join(node_ids)}",
         xaxis_title="Time",
         yaxis_title="Power usage (Watt)",
+        font_family="Avenir",
+        font_color="black",
+
         legend=dict(
-            x=0,
+            x=1,
             y=1,
             traceorder="normal",
+
+
         ),
-        plot_bgcolor='white',
+        plot_bgcolor='#e5ecf6',
         #paper_bgcolor="white"
+
     )
-    fig.update_xaxes(showline=True, linewidth=1, linecolor='lightgray', gridcolor='lightgray')
-    fig.update_yaxes(showline=True, linewidth=1, linecolor='lightgray', gridcolor='lightgray')
+    fig.update_xaxes(showline=True, linewidth=1, linecolor='white', gridcolor='white')
+    fig.update_yaxes(showline=True, linewidth=1, linecolor='white', gridcolor='white')
 
 
     return fig
@@ -213,8 +243,8 @@ def select_all(list):
             "style": {
                 "backgroundColor": "#ABE8E8",
                 'content': 'data(label)',
-                'width': "60px",
-                'height': "60px",
+                'width': "100px",
+                'height': "100px",
             }
         })
 
@@ -225,8 +255,8 @@ def highlight_selectable_nodes():
             "style": {
                 "backgroundColor": "#ABE8E8",
                 'content': 'data(label)',
-                'width': "60px",
-                'height': "60px",
+                'width': "100px",
+                'height': "100px",
             }
         })
 
@@ -264,7 +294,8 @@ def main():
     app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 
     node_info = html.Div([
-        html.H5(children=["Node info"], style={"color": "black"}, id="title")
+        html.Div(children=["Node info"], style={"border": "2px solid white",
+                                                "borderRadius": "15px","padding":"8px","color": "black","fontFamily":"Avenir","fontSize": "large"})
 
     ], style=NODE_INFO)
 
@@ -292,11 +323,28 @@ def main():
 
     last_plot: [] = [None]
 
-    def is_node_selectable(selectednodedata):
-        if selectednodedata[0]["id"] in get_selectable_nodes():
-            return True
+    def are_nodes_selectable(selectednodedata):
+        all_selectable = True
+        legal_nodes_list = []
+        for node in selectednodedata:
+            #node ist nicht legal
+            if not node["id"] in get_selectable_nodes():
+                #die legale liste bleibt leer
+                all_selectable = False
+            #node ist legal
+            else:
+                #liste wird mit dem legalen node gefüllt
+                legal_nodes_list.append(node)
+
+        #wenn die legale liste leer ist (keine legalen nodes)
+        if not legal_nodes_list:
+            #returne leere liste und False
+            return all_selectable, legal_nodes_list
         else:
-            return False
+            #returne liste der legalen nodes und True
+            return all_selectable, legal_nodes_list
+
+
 
     def close_node_panel():
         NODEPANEL_STYLE["right"] = "-50%"
@@ -319,8 +367,8 @@ def main():
                 if elem["selector"] == "." + nodeID:
                     elem["style"]["backgroundColor"] = "#ABE8E8"
                     elem["style"]["content"] = 'data(label)'
-                    elem["style"]["width"] = '60px'
-                    elem["style"]["height"] = '60px'
+                    elem["style"]["width"] = '100px'
+                    elem["style"]["height"] = '100px'
         for nodeID in selected_nodes_backup:
             selected_nodes_backup.remove(nodeID)
 
@@ -333,8 +381,8 @@ def main():
                     is_first_call = False
                     el["style"]["backgroundColor"] = "#A2C2C2"
                     el["style"]["content"] = 'data(label)'
-                    el["style"]["width"] = '60px'
-                    el["style"]["height"] = '60px'
+                    el["style"]["width"] = '100px'
+                    el["style"]["height"] = '100px'
 
         if is_first_call:
             NETWORK_STYLESHEET.append({
@@ -342,8 +390,8 @@ def main():
                 "style": {
                     "backgroundColor": "#A2C2C2",
                     'content': 'data(label)',
-                    'width': "60px",
-                    'height': "60px",
+                    'width': "100px",
+                    'height': "100px",
                 }
             })
 
@@ -365,7 +413,7 @@ def main():
             NODEPANEL_STYLE["right"] = "-75%"
             show_element(OVERLAY_STYLE, False)
         last_selected_node_content[0] = ', '.join([el for el in get_selectable_nodes()])
-        node_panel_children = [last_selected_node_content[0], dbc.Row(timeseries_chart, style=PLOT_CONTAINER), node_info]
+        node_panel_children = [dbc.Row(last_selected_node_content[0], style=NODE_NAMES_STYLE), dbc.Row(timeseries_chart, style=PLOT_CONTAINER), node_info]
         timeseries_chart_nodes = get_selectable_nodes()
         show_element(SELECT_STYLE, not is_select)
         show_element(DESELECT_STYLE, is_select)
@@ -424,34 +472,40 @@ def main():
         if select_button_clicked or deselect_button_clicked:
             return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
                     DESELECT_STYLE, OVERLAY_STYLE]
+        show_element(SELECT_STYLE, True)
+        show_element(DESELECT_STYLE, False)
+        show_element(OVERLAY_STYLE, False)
         if selectedNodeData is None:
             if not select_button_clicked:
                 close_node_panel()
         else:
-            show_element(SELECT_STYLE, True)
-            show_element(DESELECT_STYLE, False)
             # liste ist leer
+            all_selectable, legal_nodes_list = are_nodes_selectable(selectedNodeData)
             if not selectedNodeData:
                 close_node_panel()
                 timeseries_chart_nodes = last_plot[0]
-                node_panel_children = [last_selected_node_content[0], dbc.Row(timeseries_chart, style=PLOT_CONTAINER), node_info]
+                node_panel_children = [dbc.Row(last_selected_node_content[0], style=NODE_NAMES_STYLE), dbc.Row(timeseries_chart, style=PLOT_CONTAINER), node_info]
+            else:
+                #selected liste ist nicht leer und node is selectable
+                #if are_nodes_selectable returns selectedNodeData
 
-            # selected liste ist nicht leer und node is selectable
-            if selectedNodeData and is_node_selectable(selectedNodeData):
-                last_selected_node_content[0] = ', '.join([el["id"] for el in selectedNodeData])
-                set_selected_nodes([el["id"] for el in selectedNodeData])
-                node_panel_children = [last_selected_node_content[0], dbc.Row(timeseries_chart, style=PLOT_CONTAINER), node_info]
-                timeseries_chart_nodes = [el["id"] for el in selectedNodeData]
-                last_plot[0] = timeseries_chart_nodes
-                open_node_panel()
-            # geklickter node ist nicht selektierbar
-            if selectedNodeData and not is_node_selectable(selectedNodeData):
-                last_selected_nodes_id_list = last_plot[0]
-                if last_selected_nodes_id_list is not None and is_node_panel_open():
-                    set_selected_nodes(last_selected_nodes_id_list)
-                    node_panel_children = [last_selected_node_content[0], dbc.Row(timeseries_chart, style=PLOT_CONTAINER), node_info]
-                    timeseries_chart_nodes = last_plot[0]
+                if all_selectable or legal_nodes_list:
+                    last_selected_node_content[0] = ', '.join([el["id"] for el in legal_nodes_list])
+                    set_selected_nodes([el["id"] for el in legal_nodes_list])
+                    node_panel_children = [dbc.Row(last_selected_node_content[0], style=NODE_NAMES_STYLE), dbc.Row(timeseries_chart, style=PLOT_CONTAINER), node_info]
+                    timeseries_chart_nodes = [el["id"] for el in legal_nodes_list]
+                    last_plot[0] = timeseries_chart_nodes
                     open_node_panel()
+                # geklickter node ist nicht selektierbar
+                #if are_nodes_selectable returns empty list
+                else:
+                    #liste filtern
+                    last_selected_nodes_id_list = last_plot[0]
+                    if last_selected_nodes_id_list is not None and is_node_panel_open():
+                        set_selected_nodes(last_selected_nodes_id_list)
+                        node_panel_children = [dbc.Row(last_selected_node_content[0], style=NODE_NAMES_STYLE), dbc.Row(timeseries_chart, style=PLOT_CONTAINER), node_info]
+                        timeseries_chart_nodes = last_plot[0]
+                        open_node_panel()
         timeseries_chart_figure = power_fig(node_measurements, timeseries_chart_nodes)
         return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
                 DESELECT_STYLE, OVERLAY_STYLE]

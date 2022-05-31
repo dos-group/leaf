@@ -2,12 +2,13 @@
     height: 100%;
     width: 100%;
     /*backgroundColor: rgba(239, 239, 239, 1);*/
+    background:linear-gradient(rgba(255, 255, 255, 1), rgba(118, 118, 118, 1)) !important;
 }
 
 .header {
     padding: 10px;
     margin: 10px;
-    background-color: rgba(239, 239, 239, 1);
+    background: linear-gradient(rgba(255, 255, 255, 1), rgba(118, 118, 118, 1)) !important;
     position: absolute;
     z-index: 10;
 }
