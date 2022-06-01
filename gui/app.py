@@ -9,13 +9,10 @@ from dash import Input, Output, dcc, html
 import plotly.graph_objs as go
 import plotly.express as px
 
-import dash_core_components as dcc
 
 import plotly.io as pio
 from plotly.subplots import make_subplots
 import numpy as np
-
-
 
 # Colors
 bgcolor = "#f3f3f1"  # mapbox light map land color
@@ -33,14 +30,14 @@ PLOT_CONTAINER = {
     "padding": "5px",
     "margin":"5px",
     "fontFamiliy":"Avenir",
-    "filter": "drop-shadow(5px 5px 5px #808080)",
+    "filter": "drop-shadow(5px 5px 5px #879696)",
 }
 
 NODE_INFO = {
     "fontFamiliy":"Avenir",
     "borderRadius": "15px",
     "background": "white",
-    "filter": "drop-shadow(5px 5px 5px #808080)",
+    "filter": "drop-shadow(5px 5px 5px #879696)",
     "padding": "8px",
     "margin":"5px"
 
@@ -59,7 +56,8 @@ NETWORK_STYLESHEET = [
             'content': 'data(label)',
             'backgroundColor': "black",
             'width': "10px",
-            'height': "10px"
+            'height': "10px",
+            #"background-image": ["./assets/64324.png"]
 
         }
     }
@@ -129,12 +127,15 @@ NODE_NAMES_STYLE = {
     "filter": "drop-shadow(5px 5px 5px #808080)",
     "margin": "5px",
     "color": "black",
-    "fontSize": "large",
-    "border": "2px solid white",
-    "borderRadius": "15px",
-    "width": "max-content",
+    "fontSize": "larger",
+    #"border": "2px solid white",
+    #"borderRadius": "15px",
+    #"width": "max-content",
     "padding": "8px",
-    "backgroundColor": "white"
+    #"backgroundColor": "white"
+    "borderBottom": "1.5px white solid",
+    "marginBottom": "15px",
+    "justifyContent": "center"
 }
 
 
@@ -166,13 +167,16 @@ def infrastructure_to_cyto_dict(infrastructure):
         elements.append({
             'data': {'id': node["id"], 'label': node["id"]},
             'position': position,
-            'classes': node['id']
+            'classes': node['id'],
+            'selectable': node["id"] in get_selectable_nodes()
 
         })
     for link in infrastructure["links"]:
         src, dst = link["id"].split("$")
         elements.append({
-            'data': {'source': src, 'target': dst}
+            'data': {'source': src, 'target': dst, "id": link["id"]},
+            'position': position,
+            'classes': link['id']
         })
     return elements
 
@@ -191,12 +195,10 @@ def blank_fig(height):
         },
     }
 
-init_colors = ["#ffffff", "#000000", "#00FFFF", "#01FFFF","#A52A2A","#8A2BE2"]
 
-def power_fig(node_measurements, node_ids: List[str]):
-    df = node_measurements.pivot(index='time', columns='id', values=["static_power", "dynamic_power"])
+def power_fig(measurements, node_ids: List[str]):
+    df = measurements.pivot(index='time', columns='id', values=["static_power", "dynamic_power"])
     df.columns = df.columns.swaplevel()
-    print(px.colors.qualitative.Plotly)
 
     fig = go.Figure()
     for node_id in node_ids:
@@ -263,6 +265,7 @@ def highlight_selectable_nodes():
 
 config, infrastructure, node_measurements, link_measurements = load_data("../examples/smart_city_traffic/vis_results/fog_2")
 timeseries_chart = dcc.Graph(
+
     config={"displayModeBar": True},
     style={
         "borderRadius": "20px",
@@ -272,9 +275,6 @@ timeseries_chart = dcc.Graph(
 
 def main():
     # https://dash.plotly.com/cytoscape/reference
-    print("test")
-    print(get_selectable_nodes())
-    print(infrastructure_to_cyto_dict(infrastructure["100"]))
     highlight_selectable_nodes()
 
     network = cyto.Cytoscape(
@@ -301,11 +301,11 @@ def main():
 
     node_panel = html.Div(children=[
 
-         dbc.Row(
-             timeseries_chart, className='plotContainer', style=PLOT_CONTAINER, id="test"
+        dbc.Row(
+            timeseries_chart, className='plotContainer', style=PLOT_CONTAINER, id="test"
 
-         ),
-         node_info
+        ),
+        node_info
     ], style=NODEPANEL_STYLE, id="nodepanelID")
 
     overlay = html.Div(id="overlay", style=OVERLAY_STYLE)
@@ -344,7 +344,12 @@ def main():
             #returne liste der legalen nodes und True
             return all_selectable, legal_nodes_list
 
-
+    def generate_selected_edge_data(tap_edge):
+        if not tap_edge in selected_edge_data and tap_edge is not None:
+            selected_edge_data.append(tap_edge)
+        else:
+            return selected_edge_data
+        return selected_edge_data
 
     def close_node_panel():
         NODEPANEL_STYLE["right"] = "-50%"
@@ -424,7 +429,7 @@ def main():
     n_clicks_deselect_backup = [1]
 
     callback_list: [] = [False, False]
-
+    selected_edge_data = []
     @app.callback(
         Output(network, "tapNodeData"),
         Input("deselect", "n_clicks")
@@ -446,8 +451,19 @@ def main():
         Input("select", "n_clicks"),
         Input("deselect", "n_clicks"),
         Input(network, "tapNodeData"),
+        Input(network, "tapEdgeData")
+
     )
-    def update_click(selectedNodeData, n_clicks_select, n_clicks_deselect, tapNodeData):
+    def update_click(selectedNodeData, n_clicks_select, n_clicks_deselect, tapNodeData, tap_edge):
+        # if selected_edge_data and selected_edge_data is not None:
+        #      node_panel_children = ["", dbc.Row(timeseries_chart, style=PLOT_CONTAINER), node_info]
+        #      timeseries_chart_links = [selected_edge_data[0]['id']]
+        #      timeseries_chart_figure = power_fig(node_measurements, timeseries_chart_links)
+        #      return ["", node_panel_children, timeseries_chart_figure, "", "",
+        #      "", ""]
+        print(selectedNodeData)
+        print(tapNodeData)
+
         NODEPANEL_STYLE["width"] = "50%"
         node_panel_children = ["", dbc.Col(timeseries_chart, style=PLOT_CONTAINER), node_info]
         timeseries_chart_nodes = []
@@ -455,7 +471,13 @@ def main():
         select_button_clicked = False
         deselect_button_clicked = False
         reset_dash_nodes()
-        add = True if not selectedNodeData or selectedNodeData is None else False
+
+        # if tapNodeData is not None:
+        #      if not tapNodeData["id"] in get_selectable_nodes():
+        #
+        #            return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
+        #            DESELECT_STYLE, OVERLAY_STYLE]
+        #add = True if not selectedNodeData or selectedNodeData is None else False
         # auf select button geklickt
         if n_clicks_select == n_clicks_select_backup[0]:
             select_button_clicked = True
@@ -488,8 +510,7 @@ def main():
             else:
                 #selected liste ist nicht leer und node is selectable
                 #if are_nodes_selectable returns selectedNodeData
-
-                if all_selectable or legal_nodes_list:
+                if (all_selectable or legal_nodes_list) and tapNodeData["id"] in get_selectable_nodes():
                     last_selected_node_content[0] = ', '.join([el["id"] for el in legal_nodes_list])
                     set_selected_nodes([el["id"] for el in legal_nodes_list])
                     node_panel_children = [dbc.Row(last_selected_node_content[0], style=NODE_NAMES_STYLE), dbc.Row(timeseries_chart, style=PLOT_CONTAINER), node_info]
@@ -499,13 +520,15 @@ def main():
                 # geklickter node ist nicht selektierbar
                 #if are_nodes_selectable returns empty list
                 else:
-                    #liste filtern
+
                     last_selected_nodes_id_list = last_plot[0]
                     if last_selected_nodes_id_list is not None and is_node_panel_open():
                         set_selected_nodes(last_selected_nodes_id_list)
                         node_panel_children = [dbc.Row(last_selected_node_content[0], style=NODE_NAMES_STYLE), dbc.Row(timeseries_chart, style=PLOT_CONTAINER), node_info]
                         timeseries_chart_nodes = last_plot[0]
+
                         open_node_panel()
+
         timeseries_chart_figure = power_fig(node_measurements, timeseries_chart_nodes)
         return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
                 DESELECT_STYLE, OVERLAY_STYLE]
