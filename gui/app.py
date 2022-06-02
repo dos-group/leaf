@@ -60,7 +60,37 @@ NETWORK_STYLESHEET = [
             #"background-image": ["./assets/64324.png"]
 
         }
-    }
+    },
+    {
+        'selector': 'link',
+        'style': {
+            'content': 'data(label)',
+            'width': "8px",
+            'height': "8px",
+            #"background-image": ["./assets/64324.png"]
+
+        }
+    },
+    {
+        'selector': '.taxi',
+        'style': {
+            "background-image": ["./assets/2.png"],
+            'background-fit': 'cover',
+            "width": "50px",
+            "height": "50px"
+        }
+    },
+    {
+        'selector': '.traffic',
+        'style': {
+            "background-image": ["./assets/1.png"],
+            'background-fit': 'cover',
+            "width": "50px",
+            "height": "50px"
+        }
+    },
+
+
 ]
 
 NODEPANEL_STYLE = {
@@ -128,11 +158,7 @@ NODE_NAMES_STYLE = {
     "margin": "5px",
     "color": "black",
     "fontSize": "larger",
-    #"border": "2px solid white",
-    #"borderRadius": "15px",
-    #"width": "max-content",
     "padding": "8px",
-    #"backgroundColor": "white"
     "borderBottom": "1.5px white solid",
     "marginBottom": "15px",
     "justifyContent": "center"
@@ -141,9 +167,15 @@ NODE_NAMES_STYLE = {
 
 template = {"layout": {"paper_bgcolor": bgcolor, "plot_bgcolor": bgcolor}}
 
-#def randomizeColor():
-#return random.choice(colors)
 
+def set_type_of_node(nodeid):
+    node_type = nodeid
+    if nodeid.startswith("taxi"):
+        node_type = "taxi"
+    elif nodeid.startswith("traffic"):
+        node_type = "traffic"
+
+    return node_type
 
 
 def load_data(basedir):
@@ -158,19 +190,20 @@ def load_data(basedir):
 
 
 def infrastructure_to_cyto_dict(infrastructure):
-    elements = []
+    elements= []
     for node in infrastructure["nodes"]:
         if "x" in node and "y" in node:
-            position = {'x': node["x"] , 'y': node["y"] }
+            position = {'x': node["x"], 'y': node["y"]}
         else:
             position = {'x': 0, 'y': 0}
+
         elements.append({
             'data': {'id': node["id"], 'label': node["id"]},
             'position': position,
-            'classes': node['id'],
+            'classes': set_type_of_node(node['id']),
             'selectable': node["id"] in get_selectable_nodes()
-
-        })
+        }
+        )
     for link in infrastructure["links"]:
         src, dst = link["id"].split("$")
         elements.append({
@@ -178,6 +211,7 @@ def infrastructure_to_cyto_dict(infrastructure):
             'position': position,
             'classes': link['id']
         })
+
     return elements
 
 
@@ -218,7 +252,6 @@ def power_fig(measurements, node_ids: List[str]):
             x=1,
             y=1,
             traceorder="normal",
-
 
         ),
         plot_bgcolor='#e5ecf6',
@@ -262,14 +295,11 @@ def highlight_selectable_nodes():
             }
         })
 
-
 config, infrastructure, node_measurements, link_measurements = load_data("../examples/smart_city_traffic/vis_results/fog_2")
 timeseries_chart = dcc.Graph(
-
     config={"displayModeBar": True},
     style={
         "borderRadius": "20px",
-
     },
 )
 
@@ -370,10 +400,10 @@ def main():
         for nodeID in selected_nodes_backup:
             for elem in NETWORK_STYLESHEET:
                 if elem["selector"] == "." + nodeID:
-                    elem["style"]["backgroundColor"] = "#ABE8E8"
-                    elem["style"]["content"] = 'data(label)'
-                    elem["style"]["width"] = '100px'
-                    elem["style"]["height"] = '100px'
+                        elem["style"]["backgroundColor"] = "#ABE8E8"
+                        elem["style"]["content"] = 'data(label)'
+                        elem["style"]["width"] = '100px'
+                        elem["style"]["height"] = '100px'
         for nodeID in selected_nodes_backup:
             selected_nodes_backup.remove(nodeID)
 
@@ -383,22 +413,22 @@ def main():
             is_first_call = True
             for el in NETWORK_STYLESHEET:
                 if el["selector"] == "." + nodeID:
-                    is_first_call = False
-                    el["style"]["backgroundColor"] = "#A2C2C2"
-                    el["style"]["content"] = 'data(label)'
-                    el["style"]["width"] = '100px'
-                    el["style"]["height"] = '100px'
+                        is_first_call = False
+                        el["style"]["backgroundColor"] = "#A2C2C2"
+                        el["style"]["content"] = 'data(label)'
+                        el["style"]["width"] = '100px'
+                        el["style"]["height"] = '100px'
 
         if is_first_call:
-            NETWORK_STYLESHEET.append({
-                "selector": "." + nodeID,
-                "style": {
-                    "backgroundColor": "#A2C2C2",
-                    'content': 'data(label)',
-                    'width': "100px",
-                    'height': "100px",
-                }
-            })
+                NETWORK_STYLESHEET.append({
+                    "selector": "." + nodeID,
+                    "style": {
+                        "backgroundColor": "#A2C2C2",
+                        'content': 'data(label)',
+                        'width': "100px",
+                        'height': "100px",
+                    }
+                })
 
     def show_element(style, show):
         show_str = "none"
