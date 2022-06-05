@@ -594,6 +594,7 @@ def main():
                     if values[i].strip() in elem["data"]["id"]:
                         if elem["data"]["id"] not in legal_values:
                             legal_values += [elem["data"]["id"]]
+                            SUM_CHART_STYLE["display"] = "block"
                         j = 0
                         while j < len(legal_values):
                             s1 = "$"
@@ -614,6 +615,7 @@ def main():
 
             node_panel_children = [dbc.Row(last_selected_node_content[0], style=NODE_NAMES_STYLE),sum_chart, timeseries_chart, node_info]
             timeseries_chart_figure = power_fig(node_measurements, legal_values)
+            sum_chart_figure = sum_power_fig(node_measurements, legal_values)
 
             return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
                 DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, content]
@@ -671,8 +673,6 @@ def main():
                     open_node_panel()
                     if len(legal_nodes_list) > 1:
                         SUM_CHART_STYLE["display"] = "block"
-
-
                         sum_chart_figure = sum_power_fig(node_measurements, timeseries_chart_nodes)
                         node_panel_children = [dbc.Row(last_selected_node_content[0], style=NODE_NAMES_STYLE),
                                                sum_chart,
