@@ -247,7 +247,6 @@ def blank_fig(height):
         },
     }
 
-
 def power_fig(measurements, node_ids: List[str]):
     df = measurements.pivot(index='time', columns='id', values=["static_power", "dynamic_power"])
     df.columns = df.columns.swaplevel()
@@ -279,7 +278,6 @@ def power_fig(measurements, node_ids: List[str]):
     fig.update_xaxes(showline=True, linewidth=1, linecolor='white', gridcolor='white')
     fig.update_yaxes(showline=True, linewidth=1, linecolor='white', gridcolor='white')
 
-
     return fig
 
 def sum_power_fig(measurements, node_ids: List[str]):
@@ -289,7 +287,6 @@ def sum_power_fig(measurements, node_ids: List[str]):
 
     fig.add_trace(go.Scatter(x=df.index, y=df["static_power"], name="Sum Static power", line_width=1 ))
     fig.add_trace(go.Scatter(x=df.index, y=df["dynamic_power"],  name="Sum Dynamic power", line_width=1))
-
 
     fig.update_layout(
         title=f"Summed power usage: {', '.join(node_ids)}",
@@ -309,9 +306,7 @@ def sum_power_fig(measurements, node_ids: List[str]):
     fig.update_xaxes(showline=True, linewidth=1, linecolor='white', gridcolor='white')
     fig.update_yaxes(showline=True, linewidth=1, linecolor='white', gridcolor='white')
 
-
     return fig
-
 
 def get_selectable_nodes():
     helper_list = []
@@ -377,7 +372,11 @@ def main():
 
     node_info = html.Div([
         html.Div(children=["Node info"], style={"border": "2px solid white",
-                                                "borderRadius": "15px","padding":"8px","color": "black","fontFamily":"Avenir","fontSize": "large"})
+                                                "borderRadius": "15px",
+                                                "padding": "8px",
+                                                "color": "black",
+                                                "fontFamily": "Avenir",
+                                                "fontSize": "large"})
 
     ], style=NODE_INFO)
 
@@ -398,27 +397,21 @@ def main():
         html.Div([
             dbc.Col([html.Button(children=['Select all'], id="select", className="selectButton", n_clicks=0, style=SELECT_STYLE),
                      html.Button(children=['Deselect all'], id="deselect", className="deselectButton", n_clicks=0, style=DESELECT_STYLE),
-
                          html.Div(dbc.Row([dcc.Input(
                              id="input",
                              type="text",
                              value="",
-                             placeholder="write something...",
+                             placeholder="search for node types...",
                              style={
-
+                                 "width": "300px",
                                  "zIndex": "10"
                              }
-                         ), html.Button('Submit', id='submit-val', n_clicks=0),
+                         ), html.Button('Submit', id='submit-val', n_clicks=0, style={"width": "300px","zIndex": "10"}),
                             html.Div(id='container-button-basic', children='')],
-
-
-
-                         ), style={"display": "inline-flex"}
+                         ), style={"display":"table-caption"}
                          ),
                      ]
-
                      )
-
         ], ),
 
         dbc.Row([
@@ -443,13 +436,7 @@ def main():
                 #liste wird mit dem legalen node gefüllt
                 legal_nodes_list.append(node)
 
-        #wenn die legale liste leer ist (keine legalen nodes)
-        if not legal_nodes_list:
-            #returne leere liste und False
-            return all_selectable, legal_nodes_list
-        else:
-            #returne liste der legalen nodes und True
-            return all_selectable, legal_nodes_list
+        return all_selectable, legal_nodes_list
 
     def generate_selected_edge_data(tap_edge):
         if not tap_edge in selected_edge_data and tap_edge is not None:
@@ -496,7 +483,7 @@ def main():
                         el["style"]["width"] = '100px'
                         el["style"]["height"] = '100px'
 
-        if is_first_call:
+        if selected_node_data and is_first_call:
                 NETWORK_STYLESHEET.append({
                     "selector": "." + nodeID,
                     "style": {
@@ -536,7 +523,39 @@ def main():
     n_clicks_deselect_backup = [1]
     n_clicks_input_backup = [1]
 
-    callback_list: [] = [False, False]
+    def input_button_clicked(values):
+        legal_values = []
+
+        i = 0
+        while i < len(values):
+            for elem in infrastructure_to_cyto_dict(infrastructure["100"]):
+                #the infrastructure contains the value written to the input
+                elem_id = elem["data"]["id"]
+                if not is_edge(elem_id) and values[i].strip() in elem_id:
+                    if elem_id not in legal_values:
+                        legal_values += [elem_id]
+                        SUM_CHART_STYLE["display"] = "block"
+                    if not is_node_panel_open():
+                        open_node_panel()
+                    content_string = "The following nodes were found: "
+                    content = content_string + " ".join(legal_values)
+
+            if not legal_values:
+                close_node_panel()
+                content = "Nothing found"
+            i += 1
+        set_selected_nodes(get_selectable_nodes())
+        converted_legal_values = list(map(lambda x: {'id': x}, legal_values))
+        all_selectable, selectable_legal_values = are_nodes_selectable(converted_legal_values)
+        converted_selectable_legal_values = list(map(lambda x: x['id'], selectable_legal_values))
+        return converted_selectable_legal_values, content
+
+    def is_edge(elem_id):
+        if "$" in elem_id:
+            return True
+        else:
+            return False
+
     selected_edge_data = []
     @app.callback(
         Output(network, "tapNodeData"),
@@ -580,48 +599,17 @@ def main():
         # auf submit button geklickt
         if n_clicks == n_clicks_input_backup[0]:
             n_clicks_input_backup[0] += 1
-            value.split(",")
-            print(value)
-            print(value.split(","))
-            values = value.split(",")
+
             #check if value is in network
-            legal_values = []
-            i = 0
-            while i < len(values):
-                for elem in infrastructure_to_cyto_dict(infrastructure["100"]):
 
-                    #the infrastructure contains the value written to the input
-                    if values[i].strip() in elem["data"]["id"]:
-                        if elem["data"]["id"] not in legal_values:
-                            legal_values += [elem["data"]["id"]]
-                            SUM_CHART_STYLE["display"] = "block"
-                        j = 0
-                        while j < len(legal_values):
-                            s1 = "$"
-                            if s1 in legal_values[j]:
-                                legal_values.remove(legal_values[j])
-                            j += 1
-                        if not is_node_panel_open():
-                            open_node_panel()
+            legal_values, content = input_button_clicked(value.split(","))
 
-                        #show_element(OVERLAY_STYLE, True)
-                        set_selected_nodes(get_selectable_nodes())
-                        content_string = "It was found: "
-                        content = content_string + " ".join(legal_values)
-                if not legal_values:
-                    close_node_panel()
-                    content = "Please type a valid node value!"
-                i += 1
-
-            node_panel_children = [dbc.Row(last_selected_node_content[0], style=NODE_NAMES_STYLE),sum_chart, timeseries_chart, node_info]
+            node_panel_children = [dbc.Row(legal_values, style=NODE_NAMES_STYLE),sum_chart, timeseries_chart, node_info]
             timeseries_chart_figure = power_fig(node_measurements, legal_values)
             sum_chart_figure = sum_power_fig(node_measurements, legal_values)
 
             return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
                 DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, content]
-
-
-
 
         # auf select button geklickt
         if n_clicks_select == n_clicks_select_backup[0]:
@@ -661,8 +649,6 @@ def main():
                 #if are_nodes_selectable returns selectedNodeData
 
                 if (all_selectable or legal_nodes_list) and tapNodeData["id"] in get_selectable_nodes():
-
-
                     last_selected_node_content[0] = ', '.join([el["id"] for el in legal_nodes_list])
                     set_selected_nodes([el["id"] for el in legal_nodes_list])
                     node_panel_children = [dbc.Row(last_selected_node_content[0], style=NODE_NAMES_STYLE),
@@ -678,17 +664,14 @@ def main():
                                                sum_chart,
                                                timeseries_chart, node_info]
 
-
                 # geklickter node ist nicht selektierbar
                 #if are_nodes_selectable returns empty list
                 else:
-
                     last_selected_nodes_id_list = last_plot[0]
                     if last_selected_nodes_id_list is not None and is_node_panel_open():
                         set_selected_nodes(last_selected_nodes_id_list)
                         node_panel_children = [dbc.Row(last_selected_node_content[0], style=NODE_NAMES_STYLE),dbc.Row(sum_chart, style=SUM_PLOT_CONTAINER), timeseries_chart, node_info]
                         timeseries_chart_nodes = last_plot[0]
-
                         open_node_panel()
         timeseries_chart_figure = power_fig(node_measurements, timeseries_chart_nodes)
         return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
