@@ -5,7 +5,7 @@ import dash
 import dash_bootstrap_components as dbc
 import dash_cytoscape as cyto
 import pandas as pd
-from dash import Input, Output, dcc, html
+from dash import Input, Output, State, dcc, html
 import plotly.graph_objs as go
 import plotly.express as px
 
@@ -58,7 +58,7 @@ NETWORK_STYLESHEET = [
     {
         'selector': 'link',
         'style': {
-            'content': 'data(label)',
+            #'content': 'data(id)',
             'width': "8px",
             'height': "8px",
             #"background-image": ["./assets/64324.png"]
@@ -108,10 +108,6 @@ SELECT_STYLE = {
     "width": "150px",
     "margin": "10px",
     "backgroundColor": "white",
-    "position": "absolute",
-    "zIndex": "10",
-    "top": "10px",
-    "left": "10px",
     "borderRadius": "50px",
     "border": "3px #A2C2C2 solid",
     "color": "#A2C2C2",
@@ -119,15 +115,13 @@ SELECT_STYLE = {
 
 
 DESELECT_STYLE = {
-    "display":"none",
+    "display": "none",
     "padding": "10px",
     "width": "150px",
     "margin": "10px",
     "backgroundColor": "white",
-    "position": "absolute",
-    "zIndex": "10",
-    "top": "10px",
-    "left": "10px",
+    "position": "relative",
+    "zIndex": "2",
     "borderRadius": "50px",
     "border": "3px #A2C2C2 solid",
     "color": "#A2C2C2",
@@ -267,7 +261,7 @@ def power_fig(measurements, node_ids: List[str]):
 
     fig.update_layout(
         title=f"Power usage: {', '.join(node_ids)}",
-        xaxis_title="Time",
+        xaxis_title="Time in sec",
         yaxis_title="Power usage (Watt)",
         font_family="Avenir",
         font_color="black",
@@ -289,10 +283,8 @@ def power_fig(measurements, node_ids: List[str]):
     return fig
 
 def sum_power_fig(measurements, node_ids: List[str]):
-    #filter ids which are in List
     df = pd.DataFrame(measurements, columns=["time", "id", "static_power", "dynamic_power"])
     df = df[df["id"].isin(node_ids)].groupby("time").sum()
-    #df = df.groupby("time").sum()
     fig = go.Figure()
 
     fig.add_trace(go.Scatter(x=df.index, y=df["static_power"], name="Sum Static power", line_width=1 ))
@@ -301,7 +293,7 @@ def sum_power_fig(measurements, node_ids: List[str]):
 
     fig.update_layout(
         title=f"Summed power usage: {', '.join(node_ids)}",
-        xaxis_title="Time",
+        xaxis_title="Time in sec",
         yaxis_title="Summed power usage (Watt)",
         font_family="Avenir",
         font_color="black",
@@ -355,10 +347,12 @@ config, infrastructure, node_measurements, link_measurements = load_data("../exa
 timeseries_chart = dcc.Graph(
     config={"displayModeBar": True},
     style= CHART_STYLE,
+    figure={}
 )
 sum_chart = dcc.Graph(
     config={"displayModeBar": True},
     style= SUM_CHART_STYLE,
+    figure={}
 )
 
 def main():
@@ -399,9 +393,33 @@ def main():
     app.layout = html.Div([
         overlay,
         node_panel,
-        html.Button(children=['Select all'], id="select", className="selectButton", n_clicks=0, style=SELECT_STYLE),
-        html.Button(children=['Deselect all'], id="deselect", className="deselectButton",n_clicks=0, style=DESELECT_STYLE),
 
+
+        html.Div([
+            dbc.Col([html.Button(children=['Select all'], id="select", className="selectButton", n_clicks=0, style=SELECT_STYLE),
+                     html.Button(children=['Deselect all'], id="deselect", className="deselectButton", n_clicks=0, style=DESELECT_STYLE),
+
+                         html.Div(dbc.Row([dcc.Input(
+                             id="input",
+                             type="text",
+                             value="",
+                             placeholder="write something...",
+                             style={
+
+                                 "zIndex": "10"
+                             }
+                         ), html.Button('Submit', id='submit-val', n_clicks=0),
+                            html.Div(id='container-button-basic', children='')],
+
+
+
+                         ), style={"display": "inline-flex"}
+                         ),
+                     ]
+
+                     )
+
+        ], ),
 
         dbc.Row([
             dbc.Col(html.Div(network, className='networkContainer')),
@@ -516,6 +534,7 @@ def main():
     last_selected_node_content: [] = [None]
     n_clicks_select_backup = [1]
     n_clicks_deselect_backup = [1]
+    n_clicks_input_backup = [1]
 
     callback_list: [] = [False, False]
     selected_edge_data = []
@@ -537,27 +556,17 @@ def main():
         Output("deselect", "style"),
         Output("overlay", "style"),
         Output(sum_chart, component_property="figure"),
+        Output('container-button-basic', 'children'),
         Input(network, component_property='selectedNodeData'),
         Input("select", "n_clicks"),
         Input("deselect", "n_clicks"),
         Input(network, "tapNodeData"),
-        Input(network, "tapEdgeData")
+        Input(network, "tapEdgeData"),
+        Input('submit-val', 'n_clicks'),
+        State('input', 'value')
 
     )
-    def update_click(selectedNodeData, n_clicks_select, n_clicks_deselect, tapNodeData, tap_edge):
-        # if selected_edge_data and selected_edge_data is not None:
-        #       node_panel_children = ["", dbc.Row(timeseries_chart, style=PLOT_CONTAINER), node_info]
-        #       timeseries_chart_links = [selected_edge_data[0]['id']]
-        #       timeseries_chart_figure = power_fig(node_measurements, timeseries_chart_links)
-        #       return ["", node_panel_children, timeseries_chart_figure, "", "",
-        #       "", ""]
-        # if tap_edge is not None:
-        #     print(tap_edge)
-        #     timeseries_chart_links = [tap_edge["id"]]
-        #     timeseries_chart_figure = power_fig(link_measurements, timeseries_chart_links)
-        # print(selectedNodeData)
-        # print(tapNodeData)
-
+    def update_click(selectedNodeData, n_clicks_select, n_clicks_deselect, tapNodeData, tap_edge, n_clicks, value):
         NODEPANEL_STYLE["width"] = "50%"
         SUM_CHART_STYLE["display"] = "none"
         node_panel_children = ["", sum_chart, timeseries_chart, node_info]
@@ -568,22 +577,56 @@ def main():
         reset_dash_nodes()
 
         sum_chart_figure = sum_power_fig(node_measurements, timeseries_chart_nodes)
+        # auf submit button geklickt
+        if n_clicks == n_clicks_input_backup[0]:
+            n_clicks_input_backup[0] += 1
+            value.split(",")
+            print(value)
+            print(value.split(","))
+            values = value.split(",")
+            #check if value is in network
+            legal_values = []
+            i = 0
+            while i < len(values):
+                for elem in infrastructure_to_cyto_dict(infrastructure["100"]):
 
-        # if tapNodeData is not None:
-        #      if not tapNodeData["id"] in get_selectable_nodes():
-        #
-        #            return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-        #            DESELECT_STYLE, OVERLAY_STYLE]
-        #add = True if not selectedNodeData or selectedNodeData is None else False
+                    #the infrastructure contains the value written to the input
+                    if values[i].strip() in elem["data"]["id"]:
+                        if elem["data"]["id"] not in legal_values:
+                            legal_values += [elem["data"]["id"]]
+                        j = 0
+                        while j < len(legal_values):
+                            s1 = "$"
+                            if s1 in legal_values[j]:
+                                legal_values.remove(legal_values[j])
+                            j += 1
+                        if not is_node_panel_open():
+                            open_node_panel()
+
+                        #show_element(OVERLAY_STYLE, True)
+                        set_selected_nodes(get_selectable_nodes())
+                        content_string = "It was found: "
+                        content = content_string + " ".join(legal_values)
+                if not legal_values:
+                    close_node_panel()
+                    content = "Please type a valid node value!"
+                i += 1
+
+            node_panel_children = [dbc.Row(last_selected_node_content[0], style=NODE_NAMES_STYLE),sum_chart, timeseries_chart, node_info]
+            timeseries_chart_figure = power_fig(node_measurements, legal_values)
+
+            return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
+                DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, content]
+
+
+
+
         # auf select button geklickt
         if n_clicks_select == n_clicks_select_backup[0]:
             select_button_clicked = True
             node_panel_children, timeseries_chart_nodes = button_clicked(n_clicks_select_backup, True)
             timeseries_chart_figure = power_fig(node_measurements, timeseries_chart_nodes)
-
             SUM_CHART_STYLE["display"] = "block"
-
-
             sum_chart_figure = sum_power_fig(node_measurements, timeseries_chart_nodes)
             node_panel_children = [dbc.Row(last_selected_node_content[0], style=NODE_NAMES_STYLE),
                                    sum_chart,
@@ -597,7 +640,7 @@ def main():
 
         if select_button_clicked or deselect_button_clicked:
             return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure]
+                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, ""]
         show_element(SELECT_STYLE, True)
         show_element(DESELECT_STYLE, False)
         show_element(OVERLAY_STYLE, False)
@@ -649,7 +692,7 @@ def main():
                         open_node_panel()
         timeseries_chart_figure = power_fig(node_measurements, timeseries_chart_nodes)
         return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure]
+                DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, ""]
 
     app.run_server(debug=True)
 
