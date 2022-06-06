@@ -595,13 +595,19 @@ def main():
         deselect_button_clicked = False
         reset_dash_nodes()
 
+        #Auf Kante geklickt
+        if tap_edge is not None:
+            print("tap_edge")
+            print(tap_edge)
+            #timeseries_chart_links = [tap_edge["id"]]
+            #timeseries_chart_figure = power_fig(link_measurements, timeseries_chart_links)
+
         sum_chart_figure = sum_power_fig(node_measurements, timeseries_chart_nodes)
         # auf submit button geklickt
         if n_clicks == n_clicks_input_backup[0]:
             n_clicks_input_backup[0] += 1
 
             #check if value is in network
-
             legal_values, content = input_button_clicked(value.split(","))
 
             node_panel_children = [dbc.Row(legal_values, style=NODE_NAMES_STYLE),sum_chart, timeseries_chart, node_info]
