@@ -217,6 +217,7 @@ class PowerMeter:
                     raise ValueError(f"{self.name}: Unsupported type {type(self.entities)} for observable={self.entities}.")
                 measurement = PowerMeasurement.sum(entity.measure_power() for entity in entities)
             self.measurements.append(measurement)
-            self.callback(measurement)
+            if self.callback is not None:
+                self.callback(measurement)
             logger.debug(f"{env.now}: {self.name}: {measurement}")
             yield env.timeout(self.measurement_interval)
