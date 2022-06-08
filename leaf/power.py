@@ -173,10 +173,14 @@ class PowerMeter:
             (3) a function which returns a list of :class:`PowerAware` entities, if the number of these entities
             changes during the simulation.
         name: Name of the power meter for logging and reporting
-        measurement_interval: The measurement interval.
+        measurement_interval: The freequency in which measurement take place.
+        callback: A function which will be called with the PowerMeasurement result after each conducted measurement.
     """
-    def __init__(self, entities: Union[PowerAware, Collection[PowerAware], Callable[[], Collection[PowerAware]]],
-                 name: Optional[str] = None, measurement_interval: Optional[float] = 1):
+    def __init__(self,
+                 entities: Union[PowerAware, Collection[PowerAware], Callable[[], Collection[PowerAware]]],
+                 name: Optional[str] = None,
+                 measurement_interval: Optional[float] = 1,
+                 callback: Optional[Callable[[PowerMeasurement], None]] = None):
         self.entities = entities
         if name is None:
             global _unnamed_power_meters_created
@@ -185,6 +189,7 @@ class PowerMeter:
         else:
             self.name = name
         self.measurement_interval = measurement_interval
+        self.callback = callback
         self.measurements = []
 
     def run(self, env: simpy.Environment, delay: Optional[float] = 0):
@@ -212,5 +217,6 @@ class PowerMeter:
                     raise ValueError(f"{self.name}: Unsupported type {type(self.entities)} for observable={self.entities}.")
                 measurement = PowerMeasurement.sum(entity.measure_power() for entity in entities)
             self.measurements.append(measurement)
+            self.callback(measurement)
             logger.debug(f"{env.now}: {self.name}: {measurement}")
             yield env.timeout(self.measurement_interval)
