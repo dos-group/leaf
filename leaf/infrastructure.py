@@ -76,7 +76,7 @@ class Node(PowerAware):
         try:
             return self.power_model.measure()
         except AttributeError:
-            raise RuntimeError(f"{self} has no power model.")
+            return PowerMeasurement(0, 0)
 
     def _reserve_cu(self, cu: float):
         new_used_cu = self.used_cu + cu
@@ -142,7 +142,7 @@ class Link(PowerAware):
         try:
             return self.power_model.measure()
         except AttributeError:
-            raise RuntimeError(f"{self} has no power model.")
+            return PowerMeasurement(0, 0)
 
     def _reserve_bandwidth(self, bandwidth):
         new_used_bandwidth = self.used_bandwidth + bandwidth
