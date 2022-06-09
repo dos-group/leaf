@@ -90,7 +90,7 @@ NETWORK_STYLESHEET = [
 NODEPANEL_STYLE = {
     "position": "absolute",
     "right": "-50%",
-    "top": "0",
+    "top": "-26px",
     "height": "100vh",
     "width": "50%",
     "transition": "all 1000ms",
@@ -102,28 +102,30 @@ NODEPANEL_STYLE = {
     "overflowY": "auto"
 
 }
-
 SELECT_STYLE = {
-    "padding": "10px",
-    "width": "150px",
-    "margin": "10px",
+    "padding": "3px",
+    "width": "100px",
+    "margin": "5px",
     "backgroundColor": "white",
     "borderRadius": "50px",
-    "border": "3px #A2C2C2 solid",
+    "border": "3px white solid",
     "color": "#A2C2C2",
+    "marginLeft": "5px",
+    "marginRight": "15px"
 }
-
 
 DESELECT_STYLE = {
     "display": "none",
-    "padding": "10px",
-    "width": "150px",
-    "margin": "10px",
+    "padding": "3px",
+    "width": "100px",
+    "margin": "5px",
     "backgroundColor": "white",
+    "marginLeft": "5px",
+    "marginRight": "15px",
     "position": "relative",
     "zIndex": "2",
     "borderRadius": "50px",
-    "border": "3px #A2C2C2 solid",
+    "border": "3px white solid",
     "color": "#A2C2C2",
 
 }
@@ -145,7 +147,7 @@ NODE_NAMES_STYLE = {
     "fontFamiliy" : "Avenir",
     "filter": "drop-shadow(5px 5px 5px #808080)",
     "margin": "5px",
-    "color": "black",
+    "color": "white",
     "fontSize": "larger",
     "padding": "8px",
     "borderBottom": "1.5px white solid",
@@ -367,7 +369,6 @@ def main():
         id="network"
 
     )
-
     app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 
     node_info = html.Div([
@@ -377,7 +378,6 @@ def main():
                                                 "color": "black",
                                                 "fontFamily": "Avenir",
                                                 "fontSize": "large"})
-
     ], style=NODE_INFO)
 
     node_panel = html.Div(children=[
@@ -393,26 +393,47 @@ def main():
         overlay,
         node_panel,
 
-
         html.Div([
-            dbc.Col([html.Button(children=['Select all'], id="select", className="selectButton", n_clicks=0, style=SELECT_STYLE),
-                     html.Button(children=['Deselect all'], id="deselect", className="deselectButton", n_clicks=0, style=DESELECT_STYLE),
-                         html.Div(dbc.Row([dcc.Input(
+            html.Div(
+                dbc.Row([
+                        dcc.Input(
                              id="input",
                              type="text",
                              value="",
                              placeholder="search for node types...",
                              style={
                                  "width": "300px",
-                                 "zIndex": "10"
+                                 "zIndex": "10",
+                                 "height": "38px",
+                                 "borderRadius": "50px",
+                                 "padding": "3px",
+                                 "margin": "5px",
+                                 "marginLeft": "20px",
+                                 "borderStyle": "none"
                              }
-                         ), html.Button('Submit', id='submit-val', n_clicks=0, style={"width": "300px","zIndex": "10"}),
-                            html.Div(id='container-button-basic', children='')],
-                         ), style={"display":"table-caption"}
                          ),
-                     ]
-                     )
-        ], ),
+                        html.Button('Search', id='submit-val', n_clicks=0,
+                                    style={"width": "100px",
+                                           "height": "38px",
+                                           "zIndex": "10",
+                                           "position": "absolute",
+                                           "top": "5px",
+                                           "left": "220px",
+                                           "borderStyle": "none",
+                                           "backgroundColor": "transparent",
+                                           "borderRadius": "50px",
+                                           "color": "#a2c2c2"
+
+                                           }),
+                        html.Button(children=['Select all'], id="select", className="selectButton", n_clicks=0, style=SELECT_STYLE),
+                        html.Button(children=['Deselect all'], id="deselect", className="deselectButton", n_clicks=0, style=DESELECT_STYLE),
+                        html.Div(id='container-button-basic', children='')
+                        ], style={"alignItems": "baseline"}
+                        ), style={"display": "table-caption"}
+                    )
+
+        ], id="header", style={"backgroundColor": "#A2C2C2", "display": "flex", "position":"sticky", "zIndex":"10"}
+        ),
 
         dbc.Row([
             dbc.Col(html.Div(network, className='networkContainer')),
@@ -538,11 +559,11 @@ def main():
                     if not is_node_panel_open():
                         open_node_panel()
                     content_string = "The following nodes were found: "
-                    content = content_string + " ".join(legal_values)
+                    content = html.Div(content_string + " ".join(legal_values), style={"width": "50%", "position": "absolute"})
 
             if not legal_values:
                 close_node_panel()
-                content = "Nothing found"
+                content = html.Div("Nothing found", style={"width": "50%", "position": "absolute"})
             i += 1
         set_selected_nodes(get_selectable_nodes())
         converted_legal_values = list(map(lambda x: {'id': x}, legal_values))
@@ -595,10 +616,10 @@ def main():
         deselect_button_clicked = False
         reset_dash_nodes()
 
-        #Auf Kante geklickt
-        if tap_edge is not None:
-            print("tap_edge")
-            print(tap_edge)
+        # #Auf Kante geklickt
+        # if tap_edge is not None:
+        #     print("tap_edge")
+        #     print(tap_edge)
             #timeseries_chart_links = [tap_edge["id"]]
             #timeseries_chart_figure = power_fig(link_measurements, timeseries_chart_links)
 
