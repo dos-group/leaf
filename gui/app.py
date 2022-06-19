@@ -644,86 +644,11 @@ def main():
                     break
         return new_dd_value
 
-    selected_edge_data = []
-    node_types_in_dropdown = []
-    @app.callback(
-        Output(network, "tapNodeData"),
-        Input("deselect", "n_clicks")
-    )
-    def trigger_update_click_again(n_clicks):
-        if n_clicks == 0:
-            return None
-        return {"triggerHelper": True}
-
-    @app.callback(
-        Output(node_panel, 'style'),
-        Output(node_panel, "children"),
-        Output(timeseries_chart, component_property='figure'),
-        Output(network, "stylesheet"),
-        Output("select", "style"),
-        Output("deselect", "style"),
-        Output("overlay", "style"),
-        Output(sum_chart, component_property="figure"),
-        Output('container-button-basic', 'children'),
-        Output('network', 'layout'),
-        Output('options_container', 'style'),
-        Output('network', 'elements'),
-
-        Input(network, component_property='selectedNodeData'),
-        Input("select", "n_clicks"),
-        Input("deselect", "n_clicks"),
-        Input(network, "tapNodeData"),
-        Input(network, "selectedEdgeData"),
-        Input('submit-val', 'n_clicks'),
-        State('input', 'value'),
-        [Input('dd_input', 'value')],
-        Input('dpdn', 'value'),
-        Input('filter', 'n_clicks'),
-        Input('checkboxes','value')
-
-    )
-    def update_click(selectedNodeData, n_clicks_select, n_clicks_deselect, tapNodeData, selectedEgdeData, n_clicks, value, dd_value, layout_value, filter_n_clicks, checkbox_value):
-        NODEPANEL_STYLE["width"] = "50%"
-        SUM_CHART_STYLE["display"] = "none"
-        node_panel_children = ["", sum_chart, timeseries_chart]
-        timeseries_chart_nodes = []
-        timeseries_chart_figure = None
-        select_button_clicked = False
-        deselect_button_clicked = False
-        reset_dash_nodes()
-
-        sum_chart_figure = sum_power_fig(node_measurements, timeseries_chart_nodes)
-        timeseries_chart_figure = power_fig(node_measurements, dd_value)
-
-        #layout dropdown interaction
-        layout_output = None
-        if layout_value == 'grid':
-            layout_output = {
-                'name': layout_value,
-                'roots': '[id = "Executive Director (Harriet)"]',
-                'animate': True
-            }
-        else:
-            layout_output = {
-                'name': layout_value,
-                'animate': True
-            }
-        #filter_button
-        filter_output = None
-        if filter_n_clicks == filter_n_clicks_backup[0]:
-            if filter_n_clicks % 2 != 0:
-                filter_n_clicks_backup[0] += 1
-                OPTIONS_CONTAINER["display"] = "flex"
-            else:
-                filter_n_clicks_backup[0] += 1
-                OPTIONS_CONTAINER["display"] = "none"
-
-        #checkboxes interaction
+    def update_network_elements_from_filter(checkbox_value):
         if not checklist_output_backup[0]:
             checklist_output = infrastructure_to_cyto_dict(infrastructure["100"])
         else:
             checklist_output = checklist_output_backup[0]
-        #checkbox_values_backup[0] = checkbox_value
         new_infrastructure_list = []
         if checkbox_value != checkbox_values_backup[0] and checkbox_value:
             checkbox_values_backup[0] = checkbox_value
@@ -753,14 +678,89 @@ def main():
                             new_infrastructure_list.append(i)
                             checklist_output = new_infrastructure_list
                             checklist_output_backup[0] = checklist_output
-            return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "",layout_output, OPTIONS_CONTAINER, checklist_output]
         elif checkbox_value != checkbox_values_backup[0] and not checkbox_value and not checkbox_value is None:
             checkbox_values_backup[0] = checkbox_value
             checklist_output = infrastructure_to_cyto_dict(infrastructure["100"])
             checklist_output_backup[0] = []
-            return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "",layout_output, OPTIONS_CONTAINER, checklist_output]
+
+        return checklist_output
+
+
+
+    selected_edge_data = []
+    node_types_in_dropdown = []
+    @app.callback(
+        Output(network, "tapNodeData"),
+        Input("deselect", "n_clicks")
+    )
+    def trigger_update_click_again(n_clicks):
+        if n_clicks == 0:
+            return None
+        return {"triggerHelper": True}
+
+    @app.callback(
+        Output(node_panel, 'style'),
+        Output(node_panel, "children"),
+        Output(timeseries_chart, component_property='figure'),
+        Output(network, "stylesheet"),
+        Output("select", "style"),
+        Output("deselect", "style"),
+        Output("overlay", "style"),
+        Output(sum_chart, component_property="figure"),
+        Output('container-button-basic', 'children'),
+        Output('options_container', 'style'),
+        Output('network', 'layout'),
+        Output('network', 'elements'),
+
+        Input(network, component_property='selectedNodeData'),
+        Input("select", "n_clicks"),
+        Input("deselect", "n_clicks"),
+        Input(network, "tapNodeData"),
+        Input(network, "selectedEdgeData"),
+        Input('submit-val', 'n_clicks'),
+        State('input', 'value'),
+        [Input('dd_input', 'value')],
+        Input('filter', 'n_clicks'),
+        Input('dpdn', 'value'),
+        Input('checkboxes','value')
+
+    )
+    def update_click(selectedNodeData, n_clicks_select, n_clicks_deselect, tapNodeData, selectedEgdeData, n_clicks, value, dd_value, filter_n_clicks, layout_value, checkbox_value):
+        NODEPANEL_STYLE["width"] = "50%"
+        SUM_CHART_STYLE["display"] = "none"
+        node_panel_children = ["", sum_chart, timeseries_chart]
+        timeseries_chart_nodes = []
+        timeseries_chart_figure = None
+        select_button_clicked = False
+        deselect_button_clicked = False
+        reset_dash_nodes()
+
+        sum_chart_figure = sum_power_fig(node_measurements, timeseries_chart_nodes)
+        timeseries_chart_figure = power_fig(node_measurements, dd_value)
+        layout_output = None
+        if layout_value == 'grid':
+            layout_output = {
+                'name': layout_value,
+                'roots': '[id = "Executive Director (Harriet)"]',
+                'animate': True
+            }
+        else:
+            layout_output = {
+                'name': layout_value,
+                'animate': True
+            }
+
+        new_elements = update_network_elements_from_filter(checkbox_value)
+
+        #filter_button
+        filter_output = None
+        if filter_n_clicks == filter_n_clicks_backup[0]:
+            if filter_n_clicks % 2 != 0:
+                filter_n_clicks_backup[0] += 1
+                OPTIONS_CONTAINER["display"] = "flex"
+            else:
+                filter_n_clicks_backup[0] += 1
+                OPTIONS_CONTAINER["display"] = "none"
 
         #dropdown interaction
         if dd_value != dd_value_backup[0] and dd_value:
@@ -770,12 +770,17 @@ def main():
             sum_chart_figure = sum_power_fig(node_measurements, dd_value)
             open_node_panel()
             return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "",layout_output, OPTIONS_CONTAINER, checklist_output]
+                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements]
         else:
             dd_value_backup[0] = dd_value
 
+        last_was_edge = False
+        if last_plot[0]:
+            if "$" in last_plot[0][0]:
+                last_was_edge = True
+
         # #Auf Kante geklickt
-        if not selectedNodeData and not tapNodeData:
+        if not selectedNodeData and not tapNodeData or selectedEgdeData or (last_was_edge and not selectedNodeData):
             if selectedEgdeData is None:
                 close_node_panel()
             else:
@@ -795,7 +800,7 @@ def main():
                 sum_chart_figure = sum_power_fig(link_measurements, [el["id"] for el in selectedEgdeData])
 
                 return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                        DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "",layout_output, OPTIONS_CONTAINER, checklist_output]
+                        DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements]
             #timeseries_chart_links = [tap_edge["id"]]
             #timeseries_chart_figure = power_fig(link_measurements, timeseries_chart_links)
 
@@ -811,7 +816,7 @@ def main():
             sum_chart_figure = sum_power_fig(node_measurements, legal_values)
 
             return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, content,layout_output, OPTIONS_CONTAINER, checklist_output]
+                DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, content, OPTIONS_CONTAINER, layout_output, new_elements]
 
         # auf select button geklickt
         if n_clicks_select == n_clicks_select_backup[0]:
@@ -832,7 +837,7 @@ def main():
 
         if select_button_clicked or deselect_button_clicked:
             return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "",layout_output, OPTIONS_CONTAINER, checklist_output]
+                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements]
         show_element(SELECT_STYLE, True)
         show_element(DESELECT_STYLE, False)
         show_element(OVERLAY_STYLE, False)
@@ -876,7 +881,7 @@ def main():
                         open_node_panel()
         timeseries_chart_figure = power_fig(node_measurements, timeseries_chart_nodes)
         return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "",layout_output, OPTIONS_CONTAINER, checklist_output]
+                DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements]
 
     app.run_server(debug=True)
 
