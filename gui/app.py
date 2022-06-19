@@ -24,6 +24,11 @@ bar_unselected_opacity = 0.8
 
 #colors = ['rgb(127, 166, 238)', 'rgb(184, 247, 212)', 'rgb(184, 247, 212)', 'rgb(131, 90, 241)', "#DBF227"]
 
+OPTIONS_CONTAINER = {
+    "alignItems": "baseline",
+    "display":"none"
+}
+
 PLOT_CONTAINER = {
 }
 
@@ -191,7 +196,7 @@ template = {"layout": {"paper_bgcolor": bgcolor, "plot_bgcolor": bgcolor}}
 
 
 def set_type_of_node(nodeid):
-    node_type = nodeid
+    node_type = nodeid.lower()
     if nodeid.startswith("taxi"):
         node_type = "taxi"
     elif nodeid.startswith("traffic"):
@@ -374,13 +379,20 @@ def main():
     # https://dash.plotly.com/cytoscape/reference
     highlight_selectable_nodes()
     options_list = []
-    
+
+
 
     for i in infrastructure["100"]["nodes"]:
         if i not in options_list:
             options_list.append(i)
 
     options = [{'label': i["id"], 'value':i["id"]} for i in options_list]
+
+    options_checklist_list = []
+    for j in infrastructure["100"]["nodes"]:
+        if j["class"] not in options_checklist_list:
+            options_checklist_list.append(j["class"])
+    options_checklist = [{ 'label': s, 'value':set_type_of_node(s)} for s in options_checklist_list]
 
 
     network = cyto.Cytoscape(
@@ -398,33 +410,43 @@ def main():
     )
     app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 
+    search_button = html.Button('Search', id='submit-val', n_clicks=0,
+                                style={"width": "20px",
+                                       "height": "38px",
+                                       "borderStyle": "none",
+                                       "backgroundColor": "transparent",
+                                       "color": "#a2c2c2"
+                                       })
+
+    search_node_types =  html.Div(dcc.Input(
+        id="input",
+        type="text",
+        value="",
+        placeholder=" search for node types..",
+        style={
+            "width": "300px",
+            "zIndex": "10",
+            "height": "36px",
+            "borderRadius": "5px",
+            "marginLeft": "12px",
+            "borderStyle": "none"
+        }
+    ), style = OPTIONS_STYLE)
+
+    search_node_ids = html.Div(dcc.Dropdown(
+        placeholder="select specific node id",
+        options=options,
+        value=[""],
+        multi=True,
+        id='dd_input'
+    ), style = OPTIONS_STYLE)
+
+    select_all_btn = html.Button(children=['Select all'], id="select", className="selectButton", n_clicks=0, style=SELECT_STYLE)
+    deselect_all_btn = html.Button(children=['Deselect all'], id="deselect", className="deselectButton", n_clicks=0, style=DESELECT_STYLE)
 
     filter_options = html.Div(
         dbc.Row([
-            html.Div(dcc.Input(
-                id="input",
-                type="text",
-                value="",
-                placeholder=" search for node types..",
-                style={
-                    "width": "300px",
-                    "zIndex": "10",
-                    "height": "36px",
-                    "borderRadius": "5px",
-                    #"padding": "3px",
-                    #"margin": "5px",
-                    "marginLeft": "12px",
-                    "borderStyle": "none"
-                }
-            ), style = OPTIONS_STYLE)
-            ,
-            html.Button('Search', id='submit-val', n_clicks=0,
-                        style={"width": "20px",
-                               "height": "38px",
-                               "borderStyle": "none",
-                               "backgroundColor": "transparent",
-                               "color": "#a2c2c2"
-                               }),
+
             html.Div([
                 html.Div(dcc.Dropdown(
                     id='dpdn',
@@ -436,33 +458,20 @@ def main():
                         for name in ['breadthfirst' ,'grid', 'random', 'circle', 'cose', 'concentric']
                     ]
                 ), style = OPTIONS_STYLE)
-                ,
 
-                html.Div(dcc.Dropdown(
-                    placeholder="select specific node id",
-                    options=options,
-                    value=[""],
-                    multi=True,
-                    id='dd_input'
-                ), style = OPTIONS_STYLE)
                 ,
                 html.Div(id='output')
             ]),
-
-            html.Button(children=['Select all'], id="select", className="selectButton", n_clicks=0, style=SELECT_STYLE),
-            html.Button(children=['Deselect all'], id="deselect", className="deselectButton", n_clicks=0, style=DESELECT_STYLE),
             #html.Button(children=['Filter'], id="filter", className="filterBtn", n_clicks=0),
             html.H6("hide node types:"),
-            html.Div(id="checkboxes", children=[dcc.Checklist(['Cloud', 'FogNode', 'Taxi','TrafficLight'])], style=CHECKBOXES_CONTAINER_STYLE),
+            html.Div(id="checkboxes_container", children=[dcc.Checklist(id = "checkboxes", options = options_checklist)], style=CHECKBOXES_CONTAINER_STYLE),
             html.Div(dcc.Slider(0, 20, 5,
                                 value=10, id = "slider")),
             html.Div(id='container-button-basic', children='')
-        ], id = "options_container",style={"alignItems": "baseline"}
-        ), style={"display": "table-caption"}
+        ], id = "options_container",style=OPTIONS_CONTAINER
+        ), style={"display": "list-item"}
     )
-    filter_button = dbc.Col(html.Button("filter", id ="filter", n_clicks=0, style={}))
-
-
+    filter_button = dbc.Col(html.Button("filter", id ="filter", n_clicks=0))
 
     node_panel = html.Div(children=[
         dbc.Row(
@@ -476,7 +485,7 @@ def main():
         overlay,
         node_panel,
 
-        html.Div( children = [filter_options], id="header", style={"backgroundColor": "#A2C2C2", "display": "flex", "justifyContent":"space-between","position":"sticky", "zIndex":"10"}),
+        html.Div( children = [filter_button,filter_options, search_node_types, search_button, search_node_ids, select_all_btn, deselect_all_btn], id="header", style={"backgroundColor": "#A2C2C2", "display": "block", "justifyContent":"space-between","position":"sticky", "zIndex":"10"}),
 
         dbc.Row([
             dbc.Col(html.Div(network, className='networkContainer')),
@@ -485,7 +494,7 @@ def main():
 
     ],  style={"overflow": "hidden"}, id="applayoutID")
 
-    last_plot: [] = [None]
+    last_plot: [] = [[]]
 
     def are_nodes_selectable(selectednodedata):
         all_selectable = True
@@ -586,7 +595,10 @@ def main():
     n_clicks_select_backup = [1]
     n_clicks_deselect_backup = [1]
     n_clicks_input_backup = [1]
+    filter_n_clicks_backup = [1]
     dd_value_backup = [["0"]]
+    checkbox_values_backup = [1]
+    checklist_output_backup = [[]]
 
     def input_button_clicked(values):
         legal_values = []
@@ -654,8 +666,8 @@ def main():
         Output(sum_chart, component_property="figure"),
         Output('container-button-basic', 'children'),
         Output('network', 'layout'),
-        #Output('output', 'children'),
-        #Output('network', 'elements'),
+        Output('options_container', 'style'),
+        Output('network', 'elements'),
 
         Input(network, component_property='selectedNodeData'),
         Input("select", "n_clicks"),
@@ -666,10 +678,11 @@ def main():
         State('input', 'value'),
         [Input('dd_input', 'value')],
         Input('dpdn', 'value'),
-        #Input('checkboxes','children')
+        Input('filter', 'n_clicks'),
+        Input('checkboxes','value')
 
     )
-    def update_click(selectedNodeData, n_clicks_select, n_clicks_deselect, tapNodeData, selectedEgdeData, n_clicks, value, dd_value, layout_value):
+    def update_click(selectedNodeData, n_clicks_select, n_clicks_deselect, tapNodeData, selectedEgdeData, n_clicks, value, dd_value, layout_value, filter_n_clicks, checkbox_value):
         NODEPANEL_STYLE["width"] = "50%"
         SUM_CHART_STYLE["display"] = "none"
         node_panel_children = ["", sum_chart, timeseries_chart]
@@ -681,10 +694,6 @@ def main():
 
         sum_chart_figure = sum_power_fig(node_measurements, timeseries_chart_nodes)
         timeseries_chart_figure = power_fig(node_measurements, dd_value)
-        #filter_button
-
-        #checkboxes interaction
-
 
         #layout dropdown interaction
         layout_output = None
@@ -699,9 +708,60 @@ def main():
                 'name': layout_value,
                 'animate': True
             }
+        #filter_button
+        filter_output = None
+        if filter_n_clicks == filter_n_clicks_backup[0]:
+            if filter_n_clicks % 2 != 0:
+                filter_n_clicks_backup[0] += 1
+                OPTIONS_CONTAINER["display"] = "flex"
+            else:
+                filter_n_clicks_backup[0] += 1
+                OPTIONS_CONTAINER["display"] = "none"
 
-        print("dd_value")
-        print(dd_value)
+        #checkboxes interaction
+        if not checklist_output_backup[0]:
+            checklist_output = infrastructure_to_cyto_dict(infrastructure["100"])
+        else:
+            checklist_output = checklist_output_backup[0]
+        #checkbox_values_backup[0] = checkbox_value
+        new_infrastructure_list = []
+        if checkbox_value != checkbox_values_backup[0] and checkbox_value:
+            checkbox_values_backup[0] = checkbox_value
+            for j in checkbox_value:
+                for i in infrastructure_to_cyto_dict(infrastructure["100"]):
+                    #ist die node klasse die selbe wie der checkbox value
+                    xhelper = set_type_of_node(j).lower()
+                    class_if = i["classes"]
+                    if is_edge(class_if):
+                        source = class_if.split("$")[0]
+                        target = class_if.split("$")[1]
+                        source_exists = False
+                        target_exists = False
+                        for elem in checklist_output:
+                            if elem["data"]["id"] ==  source:
+                                source_exists = True
+                            if elem["data"]["id"] == target:
+                                target_exists = True
+                        if source_exists and target_exists:
+                            new_infrastructure_list.append(i)
+                            checklist_output = new_infrastructure_list
+                            checklist_output_backup[0] = checklist_output
+                    else:
+                        if "fog" in i["classes"]:
+                            class_if = "fognode"
+                        if class_if in set_type_of_node(j).lower():
+                            new_infrastructure_list.append(i)
+                            checklist_output = new_infrastructure_list
+                            checklist_output_backup[0] = checklist_output
+            return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
+                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "",layout_output, OPTIONS_CONTAINER, checklist_output]
+        elif checkbox_value != checkbox_values_backup[0] and not checkbox_value and not checkbox_value is None:
+            checkbox_values_backup[0] = checkbox_value
+            checklist_output = infrastructure_to_cyto_dict(infrastructure["100"])
+            checklist_output_backup[0] = []
+            return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
+                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "",layout_output, OPTIONS_CONTAINER, checklist_output]
+
         #dropdown interaction
         if dd_value != dd_value_backup[0] and dd_value:
             dd_value_backup[0] = dd_value
@@ -710,12 +770,12 @@ def main():
             sum_chart_figure = sum_power_fig(node_measurements, dd_value)
             open_node_panel()
             return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "",layout_output]
+                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "",layout_output, OPTIONS_CONTAINER, checklist_output]
         else:
             dd_value_backup[0] = dd_value
 
         # #Auf Kante geklickt
-        if not selectedNodeData:
+        if not selectedNodeData and not tapNodeData:
             if selectedEgdeData is None:
                 close_node_panel()
             else:
@@ -735,7 +795,7 @@ def main():
                 sum_chart_figure = sum_power_fig(link_measurements, [el["id"] for el in selectedEgdeData])
 
                 return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                        DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "",layout_output]
+                        DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "",layout_output, OPTIONS_CONTAINER, checklist_output]
             #timeseries_chart_links = [tap_edge["id"]]
             #timeseries_chart_figure = power_fig(link_measurements, timeseries_chart_links)
 
@@ -751,7 +811,7 @@ def main():
             sum_chart_figure = sum_power_fig(node_measurements, legal_values)
 
             return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, content,layout_output]
+                DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, content,layout_output, OPTIONS_CONTAINER, checklist_output]
 
         # auf select button geklickt
         if n_clicks_select == n_clicks_select_backup[0]:
@@ -772,7 +832,7 @@ def main():
 
         if select_button_clicked or deselect_button_clicked:
             return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "",layout_output]
+                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "",layout_output, OPTIONS_CONTAINER, checklist_output]
         show_element(SELECT_STYLE, True)
         show_element(DESELECT_STYLE, False)
         show_element(OVERLAY_STYLE, False)
@@ -816,7 +876,7 @@ def main():
                         open_node_panel()
         timeseries_chart_figure = power_fig(node_measurements, timeseries_chart_nodes)
         return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "",layout_output]
+                DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "",layout_output, OPTIONS_CONTAINER, checklist_output]
 
     app.run_server(debug=True)
 
