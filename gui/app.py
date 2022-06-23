@@ -95,7 +95,7 @@ NODEPANEL_STYLE = {
     "position": "absolute",
     "right": "-50%",
     "top": "-26px",
-    "height": "100vh",
+    "height": "120vh",
     "width": "50%",
     "transition": "all 1000ms",
     "backgroundColor": "#A2C2C2",
@@ -379,8 +379,6 @@ def main():
     # https://dash.plotly.com/cytoscape/reference
     highlight_selectable_nodes()
     options_list = []
-
-
 
     for i in infrastructure["100"]["nodes"]:
         if i not in options_list:
@@ -783,12 +781,14 @@ def main():
         if not selectedNodeData and not tapNodeData or selectedEgdeData or (last_was_edge and not selectedNodeData):
             if selectedEgdeData is None:
                 close_node_panel()
+
             else:
                 if not selectedEgdeData:
                     close_node_panel()
+
+                    SUM_CHART_STYLE["display"] = "block"
+
                 else:
-                    print("tap_edge")
-                    print(selectedEgdeData)
                     open_node_panel()
                     timeseries_chart_edges = [el["id"] for el in selectedEgdeData]
                     last_selected_node_content[0] = [el["id"] for el in selectedEgdeData]
@@ -797,14 +797,13 @@ def main():
 
                 node_panel_children = [dbc.Row(last_selected_node_content[0], style=NODE_NAMES_STYLE),sum_chart, timeseries_chart]
                 timeseries_chart_figure = power_fig(link_measurements, last_plot[0], False)
-                sum_chart_figure = sum_power_fig(link_measurements, [el["id"] for el in selectedEgdeData])
+                sum_chart_figure = sum_power_fig(link_measurements, last_plot[0])
 
-                return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                        DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements]
-            #timeseries_chart_links = [tap_edge["id"]]
-            #timeseries_chart_figure = power_fig(link_measurements, timeseries_chart_links)
+            return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
+                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements]
 
         sum_chart_figure = sum_power_fig(node_measurements, timeseries_chart_nodes)
+
         # auf submit button geklickt
         if n_clicks == n_clicks_input_backup[0]:
             n_clicks_input_backup[0] += 1
@@ -850,6 +849,7 @@ def main():
             if not selectedNodeData:
                 close_node_panel()
                 timeseries_chart_nodes = last_plot[0]
+
                 node_panel_children = [dbc.Row(last_selected_node_content[0], style=NODE_NAMES_STYLE), sum_chart, timeseries_chart]
             else:
                 #selected liste ist nicht leer und node is selectable
@@ -880,8 +880,12 @@ def main():
                         timeseries_chart_nodes = last_plot[0]
                         open_node_panel()
         timeseries_chart_figure = power_fig(node_measurements, timeseries_chart_nodes)
+        if len(last_plot[0]) > 1:
+            SUM_CHART_STYLE["display"] = "block"
+            sum_chart_figure = sum_power_fig(node_measurements, timeseries_chart_nodes)
+
         return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements]
+                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements]
 
     app.run_server(debug=True)
 
