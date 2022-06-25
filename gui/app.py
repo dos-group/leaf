@@ -463,8 +463,8 @@ def main():
             #html.Button(children=['Filter'], id="filter", className="filterBtn", n_clicks=0),
             html.H6("hide node types:"),
             html.Div(id="checkboxes_container", children=[dcc.Checklist(id = "checkboxes", options = options_checklist)], style=CHECKBOXES_CONTAINER_STYLE),
-            html.Div(dcc.Slider(0, 20, 5,
-                                value=10, id = "slider")),
+            html.Div(dcc.Slider(0, 86300, 100,
+                                value=0, id = "slider")),
             html.Div(id='container-button-basic', children='')
         ], id = "options_container",style=OPTIONS_CONTAINER
         ), style={"display": "list-item"}
@@ -597,6 +597,8 @@ def main():
     dd_value_backup = [["0"]]
     checkbox_values_backup = [1]
     checklist_output_backup = [[]]
+    slider_value_backup = [0]
+    slider_output_backup = [[]]
 
     def input_button_clicked(values):
         legal_values = []
@@ -642,16 +644,16 @@ def main():
                     break
         return new_dd_value
 
-    def update_network_elements_from_filter(checkbox_value):
+    def update_network_elements_from_filter(checkbox_value, current_elements=infrastructure["100"], slider_used=False):
         if not checklist_output_backup[0]:
             checklist_output = infrastructure_to_cyto_dict(infrastructure["100"])
         else:
             checklist_output = checklist_output_backup[0]
         new_infrastructure_list = []
-        if checkbox_value != checkbox_values_backup[0] and checkbox_value:
+        if (checkbox_value != checkbox_values_backup[0] and checkbox_value) or slider_used:
             checkbox_values_backup[0] = checkbox_value
             for j in checkbox_value:
-                for i in infrastructure_to_cyto_dict(infrastructure["100"]):
+                for i in infrastructure_to_cyto_dict(current_elements):
                     #ist die node klasse die selbe wie der checkbox value
                     xhelper = set_type_of_node(j).lower()
                     class_if = i["classes"]
@@ -678,12 +680,26 @@ def main():
                             checklist_output_backup[0] = checklist_output
         elif checkbox_value != checkbox_values_backup[0] and not checkbox_value and not checkbox_value is None:
             checkbox_values_backup[0] = checkbox_value
-            checklist_output = infrastructure_to_cyto_dict(infrastructure["100"])
+            checklist_output = infrastructure_to_cyto_dict(current_elements)
             checklist_output_backup[0] = []
 
         return checklist_output
 
+    def update_network_from_slider(slider_value, checkbox_value):
+        # slider used
+        if (slider_value != slider_value_backup[0]):
+            slider_value_backup[0] = slider_value
+            new_elements = infrastructure_to_cyto_dict(infrastructure[str(slider_value)])
+            if not checkbox_value:
+                return infrastructure_to_cyto_dict(infrastructure[str(slider_value)])
+            else:
+                return update_network_elements_from_filter(checkbox_value, infrastructure[str(slider_value)], True)
+            print("slider used")
+            return new_elements
+        else:
+            print("slider not used")
 
+            return update_network_elements_from_filter(checkbox_value)
 
     selected_edge_data = []
     node_types_in_dropdown = []
@@ -720,10 +736,11 @@ def main():
         [Input('dd_input', 'value')],
         Input('filter', 'n_clicks'),
         Input('dpdn', 'value'),
-        Input('checkboxes','value')
+        Input('checkboxes','value'),
+        Input('slider', 'value')
 
     )
-    def update_click(selectedNodeData, n_clicks_select, n_clicks_deselect, tapNodeData, selectedEgdeData, n_clicks, value, dd_value, filter_n_clicks, layout_value, checkbox_value):
+    def update_click(selectedNodeData, n_clicks_select, n_clicks_deselect, tapNodeData, selectedEgdeData, n_clicks, value, dd_value, filter_n_clicks, layout_value, checkbox_value, slider_value):
         NODEPANEL_STYLE["width"] = "50%"
         SUM_CHART_STYLE["display"] = "none"
         node_panel_children = ["", sum_chart, timeseries_chart]
@@ -732,7 +749,8 @@ def main():
         select_button_clicked = False
         deselect_button_clicked = False
         reset_dash_nodes()
-
+        slider_output = None
+        print(infrastructure.keys())
         sum_chart_figure = sum_power_fig(node_measurements, timeseries_chart_nodes)
         timeseries_chart_figure = power_fig(node_measurements, dd_value)
         layout_output = None
@@ -748,7 +766,10 @@ def main():
                 'animate': True
             }
 
-        new_elements = update_network_elements_from_filter(checkbox_value)
+        #new_elements = update_network_elements_from_filter(checkbox_value)
+
+        #Slider interaction
+        new_elements = update_network_from_slider(slider_value, checkbox_value)
 
         #filter_button
         filter_output = None
@@ -776,6 +797,8 @@ def main():
         if last_plot[0]:
             if "$" in last_plot[0][0]:
                 last_was_edge = True
+
+
 
         # #Auf Kante geklickt
         if not selectedNodeData and not tapNodeData or selectedEgdeData or (last_was_edge and not selectedNodeData):
