@@ -339,6 +339,8 @@ def get_selectable_nodes():
         helper_list.append(elem)
     return list(dict.fromkeys(helper_list))
 
+
+
 def select_all(list):
     for elem in list:
         NETWORK_STYLESHEET.append({
@@ -411,10 +413,15 @@ def main():
     search_button = html.Button('Search', id='submit-val', n_clicks=0,
                                 style={"width": "20px",
                                        "height": "38px",
+                                       "position":"absolute",
+                                       "top": "57px",
+                                       "left": "165px",
+                                       "zIndex":"1000",
                                        "borderStyle": "none",
                                        "backgroundColor": "transparent",
                                        "color": "#a2c2c2"
                                        })
+
 
     search_node_types =  html.Div(dcc.Input(
         id="input",
@@ -430,6 +437,7 @@ def main():
             "borderStyle": "none"
         }
     ), style = OPTIONS_STYLE)
+
 
     search_node_ids = html.Div(dcc.Dropdown(
         placeholder="select specific node id",
@@ -483,7 +491,7 @@ def main():
             html.Div(dcc.Slider(firstInfrastructureTime, lastInfrastructureTime, 100,
                                 value=100, id = "slider", marks=timeMarks)),
             html.Div(id = "slider-value"),
-            html.Div(id='container-button-basic', children='')
+
         ], id = "options_container",style=OPTIONS_CONTAINER
         ), style={"display": "list-item"}
     )
@@ -501,7 +509,7 @@ def main():
         overlay,
         node_panel,
 
-        html.Div( children = [filter_button,filter_options, search_node_types, search_button, search_node_ids, select_all_btn, deselect_all_btn], id="header", style={"backgroundColor": "#A2C2C2", "display": "block", "justifyContent":"space-between","position":"sticky", "zIndex":"10"}),
+        html.Div( children = [filter_button,filter_options, search_node_types, search_button, html.Div(id='container-button-basic', children=''), search_node_ids, select_all_btn, deselect_all_btn], id="header", style={"backgroundColor": "#A2C2C2", "display": "block", "justifyContent":"space-between","position":"sticky", "zIndex":"10"}),
 
         dbc.Row([
             dbc.Col(html.Div(network, className='networkContainer')),
@@ -618,26 +626,26 @@ def main():
     slider_value_backup = [0]
     slider_output_backup = [[]]
 
-    def input_button_clicked(values):
+    def input_button_clicked(values, current_elements):
         legal_values = []
         print(values)
         i = 0
         while i < len(values):
-            for elem in infrastructure_to_cyto_dict(infrastructure["100"]):
+            for elem in current_elements:
                 #the infrastructure contains the value written to the input
                 elem_id = elem["data"]["id"]
                 if not is_edge(elem_id) and values[i].strip() in elem_id:
-                    if elem_id not in legal_values:
+                    if elem_id not in legal_values and elem_id in get_selectable_nodes():
                         legal_values += [elem_id]
                         SUM_CHART_STYLE["display"] = "block"
                     if not is_node_panel_open():
                         open_node_panel()
                     content_string = "The following nodes were found: "
-                    content = html.Div(content_string + " ".join(legal_values), style={"width": "50%", "position": "absolute"})
+                    content = html.Div(content_string + " ".join(legal_values), style={"width": "50%"})
 
             if not legal_values:
                 close_node_panel()
-                content = html.Div("Nothing found", style={"width": "50%", "position": "absolute"})
+                content = html.Div("Nothing found", style={"width": "50%"})
             i += 1
         set_selected_nodes(get_selectable_nodes())
         converted_legal_values = list(map(lambda x: {'id': x}, legal_values))
@@ -808,6 +816,11 @@ def main():
                 'animate': True
             }
 
+        last_was_edge = False
+        if last_plot[0]:
+            if "$" in last_plot[0][0]:
+                last_was_edge = True
+
         #new_elements = update_network_elements_from_filter(checkbox_value)
 
         #Slider interaction
@@ -844,19 +857,52 @@ def main():
             return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
                     DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements, slider_text_value]
         else:
+            #hier ist bug
             SUM_CHART_STYLE["display"] = "block"
-            sum_chart_figure = sum_power_fig(node_measurements, last_plot[0])
-            timeseries_chart_figure = power_fig(node_measurements, last_plot[0])
+            measurments = node_measurements
+            if last_was_edge:
+                measurments = link_measurements
+                SUM_CHART_STYLE["display"] = "none"
+            sum_chart_figure = sum_power_fig(measurments, last_plot[0])
+            timeseries_chart_figure = power_fig(measurments, last_plot[0], False if last_was_edge else True)
             node_panel_children = [dbc.Row(last_selected_node_content[0], style=NODE_NAMES_STYLE),sum_chart, timeseries_chart]
             dd_value_backup[0] = dd_value
 
-        last_was_edge = False
-        if last_plot[0]:
-            if "$" in last_plot[0][0]:
-                last_was_edge = True
+        # auf submit button geklickt
+        if n_clicks == n_clicks_input_backup[0]:
+            n_clicks_input_backup[0] += 1
+            #check if value is in network
+            legal_values, content = input_button_clicked(value.split(","), new_elements)
 
+            node_panel_children = [dbc.Row(legal_values, style=NODE_NAMES_STYLE),sum_chart, timeseries_chart]
+            timeseries_chart_figure = power_fig(node_measurements, legal_values)
+            sum_chart_figure = sum_power_fig(node_measurements, legal_values)
 
+            return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
+                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, content, OPTIONS_CONTAINER, layout_output, new_elements, slider_text_value]
+        # auf select button geklickt
+        if n_clicks_select == n_clicks_select_backup[0]:
+            select_button_clicked = True
+            node_panel_children, timeseries_chart_nodes = button_clicked(n_clicks_select_backup, True)
+            timeseries_chart_figure = power_fig(node_measurements, timeseries_chart_nodes)
+            SUM_CHART_STYLE["display"] = "block"
+            sum_chart_figure = sum_power_fig(node_measurements, timeseries_chart_nodes)
+            node_panel_children = [dbc.Row(last_selected_node_content[0], style=NODE_NAMES_STYLE),
+                                   sum_chart,
+                                   timeseries_chart]
 
+        # auf deselect button geklickt
+        if n_clicks_deselect == n_clicks_deselect_backup[0]:
+            deselect_button_clicked = True
+            node_panel_children, timeseries_chart_nodes = button_clicked(n_clicks_deselect_backup, False)
+            timeseries_chart_figure = power_fig(node_measurements, timeseries_chart_nodes)
+
+        if select_button_clicked or deselect_button_clicked:
+            return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
+                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements, slider_text_value]
+        show_element(SELECT_STYLE, True)
+        show_element(DESELECT_STYLE, False)
+        show_element(OVERLAY_STYLE, False)
         # #Auf Kante geklickt
         if not selectedNodeData and not tapNodeData or selectedEgdeData or (last_was_edge and not selectedNodeData):
             if selectedEgdeData is None:
@@ -884,42 +930,6 @@ def main():
 
         sum_chart_figure = sum_power_fig(node_measurements, timeseries_chart_nodes)
 
-        # auf submit button geklickt
-        if n_clicks == n_clicks_input_backup[0]:
-            n_clicks_input_backup[0] += 1
-            #check if value is in network
-            legal_values, content = input_button_clicked(value.split(","))
-
-            node_panel_children = [dbc.Row(legal_values, style=NODE_NAMES_STYLE),sum_chart, timeseries_chart]
-            timeseries_chart_figure = power_fig(node_measurements, legal_values)
-            sum_chart_figure = sum_power_fig(node_measurements, legal_values)
-
-            return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, content, OPTIONS_CONTAINER, layout_output, new_elements, slider_text_value]
-
-        # auf select button geklickt
-        if n_clicks_select == n_clicks_select_backup[0]:
-            select_button_clicked = True
-            node_panel_children, timeseries_chart_nodes = button_clicked(n_clicks_select_backup, True)
-            timeseries_chart_figure = power_fig(node_measurements, timeseries_chart_nodes)
-            SUM_CHART_STYLE["display"] = "block"
-            sum_chart_figure = sum_power_fig(node_measurements, timeseries_chart_nodes)
-            node_panel_children = [dbc.Row(last_selected_node_content[0], style=NODE_NAMES_STYLE),
-                                   sum_chart,
-                                   timeseries_chart]
-
-        # auf deselect button geklickt
-        if n_clicks_deselect == n_clicks_deselect_backup[0]:
-            deselect_button_clicked = True
-            node_panel_children, timeseries_chart_nodes = button_clicked(n_clicks_deselect_backup, False)
-            timeseries_chart_figure = power_fig(node_measurements, timeseries_chart_nodes)
-
-        if select_button_clicked or deselect_button_clicked:
-            return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements, slider_text_value]
-        show_element(SELECT_STYLE, True)
-        show_element(DESELECT_STYLE, False)
-        show_element(OVERLAY_STYLE, False)
         if selectedNodeData is None:
             if not select_button_clicked:
                 close_node_panel()
