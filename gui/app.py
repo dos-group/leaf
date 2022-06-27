@@ -378,13 +378,13 @@ sum_chart = dcc.Graph(
 def main():
     # https://dash.plotly.com/cytoscape/reference
     highlight_selectable_nodes()
-    options_list = []
+    options_list = ["select all"]
 
-    for i in infrastructure["100"]["nodes"]:
+    for i in get_selectable_nodes():
         if i not in options_list:
             options_list.append(i)
 
-    options = [{'label': i["id"], 'value':i["id"]} for i in options_list]
+    options = [{'label': i, 'value':i} for i in options_list]
 
     options_checklist_list = []
     for j in infrastructure["100"]["nodes"]:
@@ -482,6 +482,7 @@ def main():
             html.Div(id="checkboxes_container", children=[dcc.Checklist(id = "checkboxes", options = options_checklist)], style=CHECKBOXES_CONTAINER_STYLE),
             html.Div(dcc.Slider(firstInfrastructureTime, lastInfrastructureTime, 100,
                                 value=100, id = "slider", marks=timeMarks)),
+            html.Div(id = "slider-value"),
             html.Div(id='container-button-basic', children='')
         ], id = "options_container",style=OPTIONS_CONTAINER
         ), style={"display": "list-item"}
@@ -715,6 +716,9 @@ def main():
             checkbox_values_backup[0] = checkbox_value
             new_infrastructure_list = infrastructure_to_cyto_dict(current_elements)
             checklist_output_backup[0] = []
+        elif checkbox_value:
+            # wenn noch nie slider benutzt wurde und filter benutzt wurde und auf knoten geklickt wurde
+            new_infrastructure_list = checklist_output
         else:
             new_infrastructure_list = infrastructure_to_cyto_dict(current_elements)
         return new_infrastructure_list
@@ -759,6 +763,7 @@ def main():
         Output('options_container', 'style'),
         Output('network', 'layout'),
         Output('network', 'elements'),
+        Output('slider-value', 'children'),
 
         Input(network, component_property='selectedNodeData'),
         Input("select", "n_clicks"),
@@ -786,8 +791,10 @@ def main():
         slider_output = None
         print(infrastructure.keys())
         print(len(infrastructure.keys()))
+
         sum_chart_figure = sum_power_fig(node_measurements, timeseries_chart_nodes)
-        timeseries_chart_figure = power_fig(node_measurements, dd_value)
+        dd_helper = list(filter(lambda elem: not elem == "select all", dd_value))
+        timeseries_chart_figure = power_fig(node_measurements, dd_helper)
         layout_output = None
         if layout_value == 'grid':
             layout_output = {
@@ -805,7 +812,7 @@ def main():
 
         #Slider interaction
         new_elements = update_network_from_slider(slider_value, checkbox_value)
-
+        slider_text_value = 'Current selected timeslot: "{}"'.format(slider_value)
         #filter_button
         filter_output = None
         if filter_n_clicks == filter_n_clicks_backup[0]:
@@ -818,14 +825,29 @@ def main():
 
         #dropdown interaction
         if dd_value != dd_value_backup[0] and dd_value:
+            dd_elements = dd_value
+
+            if "select all" in dd_value:
+                set_selected_nodes(get_selectable_nodes())
+                dd_elements = get_selectable_nodes()
+            else:
+                set_selected_nodes(dd_value)
             dd_value_backup[0] = dd_value
-            node_panel_children = [dbc.Row(dd_value, style=NODE_NAMES_STYLE),sum_chart, timeseries_chart]
-            timeseries_chart_figure = power_fig(node_measurements, dd_value)
-            sum_chart_figure = sum_power_fig(node_measurements, dd_value)
+            node_panel_children = [dbc.Row(dd_elements, style=NODE_NAMES_STYLE),sum_chart, timeseries_chart]
+            timeseries_chart_figure = power_fig(node_measurements, dd_elements)
+            sum_chart_figure = sum_power_fig(node_measurements, dd_elements)
+            SUM_CHART_STYLE["display"] = "block"
             open_node_panel()
+
+            last_plot[0] = dd_elements
+            last_selected_node_content[0] = dd_elements
             return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements]
+                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements, slider_text_value]
         else:
+            SUM_CHART_STYLE["display"] = "block"
+            sum_chart_figure = sum_power_fig(node_measurements, last_plot[0])
+            timeseries_chart_figure = power_fig(node_measurements, last_plot[0])
+            node_panel_children = [dbc.Row(last_selected_node_content[0], style=NODE_NAMES_STYLE),sum_chart, timeseries_chart]
             dd_value_backup[0] = dd_value
 
         last_was_edge = False
@@ -858,7 +880,7 @@ def main():
                 sum_chart_figure = sum_power_fig(link_measurements, last_plot[0])
 
             return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements]
+                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements, slider_text_value]
 
         sum_chart_figure = sum_power_fig(node_measurements, timeseries_chart_nodes)
 
@@ -873,7 +895,7 @@ def main():
             sum_chart_figure = sum_power_fig(node_measurements, legal_values)
 
             return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, content, OPTIONS_CONTAINER, layout_output, new_elements]
+                DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, content, OPTIONS_CONTAINER, layout_output, new_elements, slider_text_value]
 
         # auf select button geklickt
         if n_clicks_select == n_clicks_select_backup[0]:
@@ -894,7 +916,7 @@ def main():
 
         if select_button_clicked or deselect_button_clicked:
             return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements]
+                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements, slider_text_value]
         show_element(SELECT_STYLE, True)
         show_element(DESELECT_STYLE, False)
         show_element(OVERLAY_STYLE, False)
@@ -943,7 +965,7 @@ def main():
             sum_chart_figure = sum_power_fig(node_measurements, timeseries_chart_nodes)
 
         return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements]
+                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements, slider_text_value]
 
     app.run_server(debug=True)
 
