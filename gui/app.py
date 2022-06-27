@@ -442,6 +442,23 @@ def main():
     select_all_btn = html.Button(children=['Select all'], id="select", className="selectButton", n_clicks=0, style=SELECT_STYLE)
     deselect_all_btn = html.Button(children=['Deselect all'], id="deselect", className="deselectButton", n_clicks=0, style=DESELECT_STYLE)
 
+    firstInfrastructureTime = int(list(infrastructure)[0])
+    lastInfrastructureTime = int(list(infrastructure)[len(list(infrastructure)) - 1])
+
+    counter = 0
+    timeMarks = {}
+    for time in infrastructure:
+        if counter == 0 or counter % 40 == 0 or counter == len(list(infrastructure)) - 1:
+            timeMarks[time] = {
+                "label": time,
+            }
+        else:
+            timeMarks[time] = {
+                "label": "",
+            }
+        counter += 1
+
+
     filter_options = html.Div(
         dbc.Row([
 
@@ -463,8 +480,8 @@ def main():
             #html.Button(children=['Filter'], id="filter", className="filterBtn", n_clicks=0),
             html.H6("hide node types:"),
             html.Div(id="checkboxes_container", children=[dcc.Checklist(id = "checkboxes", options = options_checklist)], style=CHECKBOXES_CONTAINER_STYLE),
-            html.Div(dcc.Slider(0, 86300, 100,
-                                value=0, id = "slider")),
+            html.Div(dcc.Slider(firstInfrastructureTime, lastInfrastructureTime, 100,
+                                value=100, id = "slider", marks=timeMarks)),
             html.Div(id='container-button-basic', children='')
         ], id = "options_container",style=OPTIONS_CONTAINER
         ), style={"display": "list-item"}
@@ -645,8 +662,8 @@ def main():
         return new_dd_value
 
     def update_network_elements_from_filter(checkbox_value, current_elements=infrastructure["100"], slider_used=False):
-        if not checklist_output_backup[0]:
-            checklist_output = infrastructure_to_cyto_dict(infrastructure["100"])
+        if not checklist_output_backup[0] or slider_used:
+            checklist_output = infrastructure_to_cyto_dict(current_elements)
         else:
             checklist_output = checklist_output_backup[0]
         new_infrastructure_list = []
@@ -660,30 +677,47 @@ def main():
                     if is_edge(class_if):
                         source = class_if.split("$")[0]
                         target = class_if.split("$")[1]
-                        source_exists = False
-                        target_exists = False
-                        for elem in checklist_output:
-                            if elem["data"]["id"] ==  source:
-                                source_exists = True
-                            if elem["data"]["id"] == target:
-                                target_exists = True
-                        if source_exists and target_exists:
-                            new_infrastructure_list.append(i)
-                            checklist_output = new_infrastructure_list
-                            checklist_output_backup[0] = checklist_output
+
+                        source_in_filter = False
+                        target_in_filter = False
+                        if "fog" in source:
+                            source_type = "fognode"
+                        else:
+                            source_type = set_type_of_node(source)
+                        if "fog" in target:
+                            target_type = "fognode"
+                        else:
+                            target_type = set_type_of_node(target)
+                        for k in checkbox_value:
+                            if source_type in set_type_of_node(k).lower():
+                                source_in_filter = True
+                            if target_type in set_type_of_node(k).lower():
+                                target_in_filter = True
+                        if source_in_filter and target_in_filter:
+                            source_exists = False
+                            target_exists = False
+                            for elem in infrastructure_to_cyto_dict(current_elements):
+                                if elem["data"]["id"] == source:
+                                    source_exists = True
+                                if elem["data"]["id"] == target:
+                                    target_exists = True
+                                if source_exists and target_exists:
+                                    new_infrastructure_list.append(i)
+                                    checklist_output_backup[0] = new_infrastructure_list
+                                    break
                     else:
                         if "fog" in i["classes"]:
                             class_if = "fognode"
                         if class_if in set_type_of_node(j).lower():
                             new_infrastructure_list.append(i)
-                            checklist_output = new_infrastructure_list
-                            checklist_output_backup[0] = checklist_output
+                            checklist_output_backup[0] = new_infrastructure_list
         elif checkbox_value != checkbox_values_backup[0] and not checkbox_value and not checkbox_value is None:
             checkbox_values_backup[0] = checkbox_value
-            checklist_output = infrastructure_to_cyto_dict(current_elements)
+            new_infrastructure_list = infrastructure_to_cyto_dict(current_elements)
             checklist_output_backup[0] = []
-
-        return checklist_output
+        else:
+            new_infrastructure_list = infrastructure_to_cyto_dict(current_elements)
+        return new_infrastructure_list
 
     def update_network_from_slider(slider_value, checkbox_value):
         # slider used
@@ -698,8 +732,8 @@ def main():
             return new_elements
         else:
             print("slider not used")
-
-            return update_network_elements_from_filter(checkbox_value)
+            new_elements = infrastructure[str(slider_value)]
+            return update_network_elements_from_filter(checkbox_value, new_elements)
 
     selected_edge_data = []
     node_types_in_dropdown = []
@@ -751,6 +785,7 @@ def main():
         reset_dash_nodes()
         slider_output = None
         print(infrastructure.keys())
+        print(len(infrastructure.keys()))
         sum_chart_figure = sum_power_fig(node_measurements, timeseries_chart_nodes)
         timeseries_chart_figure = power_fig(node_measurements, dd_value)
         layout_output = None
