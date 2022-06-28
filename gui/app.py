@@ -638,6 +638,7 @@ def main():
                     if elem_id not in legal_values and elem_id in get_selectable_nodes():
                         legal_values += [elem_id]
                         SUM_CHART_STYLE["display"] = "block"
+
                     if not is_node_panel_open():
                         open_node_panel()
                     content_string = "The following nodes were found: "
@@ -645,12 +646,13 @@ def main():
 
             if not legal_values:
                 close_node_panel()
+
                 content = html.Div("Nothing found", style={"width": "50%"})
             i += 1
-        set_selected_nodes(get_selectable_nodes())
         converted_legal_values = list(map(lambda x: {'id': x}, legal_values))
         all_selectable, selectable_legal_values = are_nodes_selectable(converted_legal_values)
         converted_selectable_legal_values = list(map(lambda x: x['id'], selectable_legal_values))
+        set_selected_nodes(converted_selectable_legal_values)
         return converted_selectable_legal_values, content
 
     def is_edge(elem_id):
@@ -789,7 +791,7 @@ def main():
     )
     def update_click(selectedNodeData, n_clicks_select, n_clicks_deselect, tapNodeData, selectedEgdeData, n_clicks, value, dd_value, filter_n_clicks, layout_value, checkbox_value, slider_value):
         NODEPANEL_STYLE["width"] = "50%"
-        SUM_CHART_STYLE["display"] = "none"
+        #SUM_CHART_STYLE["display"] = "none"
         node_panel_children = ["", sum_chart, timeseries_chart]
         timeseries_chart_nodes = []
         timeseries_chart_figure = None
@@ -849,7 +851,7 @@ def main():
             node_panel_children = [dbc.Row(dd_elements, style=NODE_NAMES_STYLE),sum_chart, timeseries_chart]
             timeseries_chart_figure = power_fig(node_measurements, dd_elements)
             sum_chart_figure = sum_power_fig(node_measurements, dd_elements)
-            SUM_CHART_STYLE["display"] = "block"
+            #SUM_CHART_STYLE["display"] = "block"
             open_node_panel()
 
             last_plot[0] = dd_elements
@@ -858,11 +860,11 @@ def main():
                     DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements, slider_text_value]
         else:
             #hier ist bug
-            SUM_CHART_STYLE["display"] = "block"
+            #SUM_CHART_STYLE["display"] = "block"
             measurments = node_measurements
             if last_was_edge:
                 measurments = link_measurements
-                SUM_CHART_STYLE["display"] = "none"
+                #SUM_CHART_STYLE["display"] = "none"
             sum_chart_figure = sum_power_fig(measurments, last_plot[0])
             timeseries_chart_figure = power_fig(measurments, last_plot[0], False if last_was_edge else True)
             node_panel_children = [dbc.Row(last_selected_node_content[0], style=NODE_NAMES_STYLE),sum_chart, timeseries_chart]
@@ -873,10 +875,13 @@ def main():
             n_clicks_input_backup[0] += 1
             #check if value is in network
             legal_values, content = input_button_clicked(value.split(","), new_elements)
+            if legal_values:
+                last_plot[0] = legal_values
 
-            node_panel_children = [dbc.Row(legal_values, style=NODE_NAMES_STYLE),sum_chart, timeseries_chart]
-            timeseries_chart_figure = power_fig(node_measurements, legal_values)
-            sum_chart_figure = sum_power_fig(node_measurements, legal_values)
+
+            sum_chart_figure = sum_power_fig(measurments, last_plot[0])
+            timeseries_chart_figure = power_fig(measurments, last_plot[0], False if last_was_edge else True)
+            node_panel_children = [dbc.Row(last_selected_node_content[0], style=NODE_NAMES_STYLE),sum_chart, timeseries_chart]
 
             return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
                     DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, content, OPTIONS_CONTAINER, layout_output, new_elements, slider_text_value]
@@ -953,10 +958,10 @@ def main():
                     timeseries_chart_nodes = [el["id"] for el in legal_nodes_list]
                     last_plot[0] = timeseries_chart_nodes
                     open_node_panel()
-                    if len(legal_nodes_list) > 1:
-                        SUM_CHART_STYLE["display"] = "block"
-                        sum_chart_figure = sum_power_fig(node_measurements, timeseries_chart_nodes)
-                        node_panel_children = [dbc.Row(last_selected_node_content[0], style=NODE_NAMES_STYLE),
+                    #if len(legal_nodes_list) > 1:
+                        #SUM_CHART_STYLE["display"] = "block"
+                    sum_chart_figure = sum_power_fig(node_measurements, timeseries_chart_nodes)
+                    node_panel_children = [dbc.Row(last_selected_node_content[0], style=NODE_NAMES_STYLE),
                                                sum_chart,
                                                timeseries_chart]
 
@@ -970,9 +975,10 @@ def main():
                         timeseries_chart_nodes = last_plot[0]
                         open_node_panel()
         timeseries_chart_figure = power_fig(node_measurements, timeseries_chart_nodes)
-        if len(last_plot[0]) > 1:
-            SUM_CHART_STYLE["display"] = "block"
-            sum_chart_figure = sum_power_fig(node_measurements, timeseries_chart_nodes)
+        sum_chart_figure = sum_power_fig(node_measurements, timeseries_chart_nodes)
+        #if len(last_plot[0]) > 1:
+        SUM_CHART_STYLE["display"] = "block"
+        sum_chart_figure = sum_power_fig(node_measurements, timeseries_chart_nodes)
 
         return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
                     DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements, slider_text_value]
