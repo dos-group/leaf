@@ -495,7 +495,9 @@ def main():
         ], id = "options_container",style=OPTIONS_CONTAINER
         ), style={"display": "list-item"}
     )
-    filter_button = dbc.Col(html.Button("filter", id ="filter", n_clicks=0))
+    filter_icon = dbc.Col( style = {"padding": "10px"}, children = [html.Div( id ="filter", className="close",  n_clicks=0, children = [ html.Span(id="line_1"), html.Span(id="line_2"), html.Span(id="line_3") ])])
+
+    #filter_icon = dbc.Col(html.Div(id = "filter_button", children = [ html.Span(id="line_1"), html.Span(id="line_2"), html.Span(id="line_3") ]))
 
     node_panel = html.Div(children=[
         dbc.Row(
@@ -509,7 +511,7 @@ def main():
         overlay,
         node_panel,
 
-        html.Div( children = [filter_button,filter_options, search_node_types, search_button, html.Div(id='container-button-basic', children=''), search_node_ids, select_all_btn, deselect_all_btn], id="header", style={"backgroundColor": "#A2C2C2", "display": "block", "justifyContent":"space-between","position":"sticky", "zIndex":"10"}),
+        html.Div( children = [ filter_icon,  filter_options, search_node_types, search_button, html.Div(id='container-button-basic', children=''), search_node_ids, select_all_btn, deselect_all_btn], id="header", style={"backgroundColor": "white", "display": "block", "justifyContent":"space-between","position":"sticky", "zIndex":"10"}),
 
         dbc.Row([
             dbc.Col(html.Div(network, className='networkContainer')),
@@ -774,6 +776,7 @@ def main():
         Output('network', 'layout'),
         Output('network', 'elements'),
         Output('slider-value', 'children'),
+        Output('filter', "className"),
 
         Input(network, component_property='selectedNodeData'),
         Input("select", "n_clicks"),
@@ -799,6 +802,7 @@ def main():
         deselect_button_clicked = False
         reset_dash_nodes()
         slider_output = None
+        filter_icon = None
         print(infrastructure.keys())
         print(len(infrastructure.keys()))
 
@@ -832,9 +836,11 @@ def main():
         filter_output = None
         if filter_n_clicks == filter_n_clicks_backup[0]:
             if filter_n_clicks % 2 != 0:
+                filter_icon = "open"
                 filter_n_clicks_backup[0] += 1
                 OPTIONS_CONTAINER["display"] = "flex"
             else:
+                filter_icon = "close"
                 filter_n_clicks_backup[0] += 1
                 OPTIONS_CONTAINER["display"] = "none"
 
@@ -857,7 +863,7 @@ def main():
             last_plot[0] = dd_elements
             last_selected_node_content[0] = dd_elements
             return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements, slider_text_value]
+                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements, slider_text_value, filter_icon]
         else:
             #hier ist bug
             #SUM_CHART_STYLE["display"] = "block"
@@ -867,7 +873,7 @@ def main():
                 #SUM_CHART_STYLE["display"] = "none"
             sum_chart_figure = sum_power_fig(measurments, last_plot[0])
             timeseries_chart_figure = power_fig(measurments, last_plot[0], False if last_was_edge else True)
-            node_panel_children = [dbc.Row(last_selected_node_content[0], style=NODE_NAMES_STYLE),sum_chart, timeseries_chart]
+            node_panel_children = [dbc.Row(last_selected_node_content[0], style=NODE_NAMES_STYLE),sum_chart, timeseries_chart,filter_icon]
             dd_value_backup[0] = dd_value
 
         # auf submit button geklickt
@@ -884,7 +890,7 @@ def main():
             node_panel_children = [dbc.Row(last_selected_node_content[0], style=NODE_NAMES_STYLE),sum_chart, timeseries_chart]
 
             return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, content, OPTIONS_CONTAINER, layout_output, new_elements, slider_text_value]
+                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, content, OPTIONS_CONTAINER, layout_output, new_elements, slider_text_value,filter_icon]
         # auf select button geklickt
         if n_clicks_select == n_clicks_select_backup[0]:
             select_button_clicked = True
@@ -904,7 +910,7 @@ def main():
 
         if select_button_clicked or deselect_button_clicked:
             return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements, slider_text_value]
+                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements, slider_text_value,filter_icon]
         show_element(SELECT_STYLE, True)
         show_element(DESELECT_STYLE, False)
         show_element(OVERLAY_STYLE, False)
@@ -931,7 +937,7 @@ def main():
                 sum_chart_figure = sum_power_fig(link_measurements, last_plot[0])
 
             return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements, slider_text_value]
+                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements, slider_text_value,filter_icon]
 
         sum_chart_figure = sum_power_fig(node_measurements, timeseries_chart_nodes)
 
@@ -981,7 +987,7 @@ def main():
         sum_chart_figure = sum_power_fig(node_measurements, timeseries_chart_nodes)
 
         return [NODEPANEL_STYLE, node_panel_children, timeseries_chart_figure, NETWORK_STYLESHEET, SELECT_STYLE,
-                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements, slider_text_value]
+                    DESELECT_STYLE, OVERLAY_STYLE, sum_chart_figure, "", OPTIONS_CONTAINER, layout_output, new_elements, slider_text_value,filter_icon]
 
     app.run_server(debug=True)
 

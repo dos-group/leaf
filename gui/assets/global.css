@@ -2,3 +2,7 @@ body {
     overflow: hidden;
     font-family: Avenir;
 }
+
+#filter {
+    background-color: #A2C2C2 !important;
+}
