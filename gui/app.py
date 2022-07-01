@@ -95,16 +95,14 @@ NETWORK_STYLESHEET = [
 NODEPANEL_STYLE = {
     "position": "absolute",
     "right": "-50%",
-    "top": "-26px",
-    "height": "120vh",
+    "height": "100vh",
     "width": "50%",
     "transition": "all 1000ms",
     "backgroundColor": "#A2C2C2",
     "zIndex": "10000",
     "color": "white",
     "padding": "25px",
-    "overflow": "hidden",
-    "overflowY": "auto"
+    "overflowY": "scroll"
 }
 SELECT_STYLE = {
     "padding": "3px",
@@ -492,6 +490,7 @@ def main():
             html.Div(dcc.Slider(firstInfrastructureTime, lastInfrastructureTime, 100,
                                 value=100, id = "slider", marks=timeMarks), style={"paddingLeft":"15px"}),
             html.Div(id = "slider-value", style={"marginLeft":"4px", "padding":"20px", "marginTop":"-20px"}),
+            #dcc.Loading(id="is_loading_1", children = [html.Div(id = "is-loading-output-1")])
 
         ], id = "options_container",style=OPTIONS_CONTAINER
         ), style={"display": "list-item"}
