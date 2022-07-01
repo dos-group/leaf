@@ -3,6 +3,28 @@ body {
     font-family: Avenir;
 }
 
-#filter {
-    background-color: #A2C2C2 !important;
+#filter{
+    margin:5px;
+}
+
+::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+    color: #A8A8A8		;
+    opacity: 1; /* Firefox */
+    border-style: none;
+    margin-left: 7px;
+}
+.Select-control{
+    border-style:none
+}
+input:valid{
+    width:30px;
+    height:20px
+}
+label{
+    display:table;
+}
+
+.rc-slider rc-slider-with-marks{
+    margin-left: -10px;
+    margin-top: 40px;
 }

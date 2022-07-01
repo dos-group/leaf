@@ -33,12 +33,12 @@
 
 
 .selectButton:hover {
-    background-color: #A2C2C2 !important;
-    color:white !important;
+    background-color: white !important;
+    color:#A2C2C2 !important;
 }
 .deselectButton:hover {
-    background-color: #A2C2C2 !important;
-    color:white !important;
+    background-color: white !important;
+    color:#A2C2C2 !important;
 
 }
 
@@ -117,3 +117,6 @@
     left:6px;
 }
 
+#search-node-types {
+    display: flex;
+}
