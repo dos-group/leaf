@@ -40,8 +40,6 @@ OPTIONS_STYLE = {
     "margin": "5px",
 }
 
-
-
 NETWORK_STYLE = {
     "width": "100%",
     "height": "100%",
@@ -61,12 +59,61 @@ NETWORK_STYLESHEET = [
         }
     },
     {
-        'selector': 'link',
+        'selector': '.LinkWanDown',
         'style': {
-            #'content': 'data(id)',
             'width': "8px",
             'height': "8px",
-            #"background-image": ["./assets/64324.png"]
+            'label': 'WanDown'
+            #'line-color': "#000000",
+            #'label': 'wan'
+            #'line-dash-offset':'10px',
+            #'line-dash-pattern':'[6, 3]'
+            #ABE8E8
+            #A2C2C2
+
+
+        }
+    },
+    {
+        'selector': '.LinkEthernet',
+        'style': {
+            'width': "8px",
+            'height': "8px",
+            'line-color': "#ABE8E8",
+            'label': 'Ethernet'
+            #'line-dash-offset':'10px',LinkWifiTaxiToTrafficLight
+            #'line-dash-pattern':'[6, 3]'
+            #ABE8E8
+            #A2C2C2
+
+
+        }
+    },
+    {
+        'selector': '.LinkWifiBetweenTrafficLights',
+        'style': {
+            'width': "8px",
+            'height': "8px",
+            'line-color': "#ffffff",
+            'label': 'Wifi'
+            #'line-dash-pattern':'[6, 3]'
+            #ABE8E8
+            #A2C2C2
+
+
+        }
+    },
+    {
+        'selector': '.LinkWifiTaxiToTrafficLight',
+        'style': {
+            'width': "8px",
+            'height': "8px",
+            'line-color': "#6d8f8f",
+            'label': 'Wifi'
+            #'line-dash-pattern':'[6, 3]'
+            #ABE8E8
+            #6d8f8f
+
 
         }
     },
@@ -246,7 +293,8 @@ def infrastructure_to_cyto_dict(infrastructure):
         elements.append({
             'data': {'source': src, 'target': dst, "id": link["id"]},
             'position': position,
-            'classes': link['id']
+            'classes': link['class'],
+
         })
         #print(infrastructure["nodes"][0]["class"])
 
@@ -333,7 +381,7 @@ def sum_power_fig(measurements, node_ids: List[str]):
             y=1,
             traceorder="normal",
         ),
-        plot_bgcolor='#e5ecf6',
+        plot_bgcolor='#f6f6e5',
         #paper_bgcolor="white"
 
     )
@@ -426,7 +474,7 @@ def main():
         elements=infrastructure_to_cyto_dict(infrastructure["100"]),
         style=NETWORK_STYLE,
         maxZoom=10,
-        minZoom=0.2,
+        minZoom=0.1,
         stylesheet=NETWORK_STYLESHEET,
         id="network"
 
@@ -533,9 +581,7 @@ def main():
     app.layout = html.Div([
         overlay,
         node_panel,
-
         html.Div( children = [ filter_icon,  filter_options, search_node_types, html.Div(id='container-button-basic', children=''), search_node_ids, select_all_btn, deselect_all_btn], id="header", style={"backgroundColor": "white", "display": "block", "justifyContent":"space-between","position":"absolute", "width":"100vw", "zIndex":"10"}),
-
         dbc.Row([
             dbc.Col(html.Div(network, className='networkContainer')),
         ], className='childrenContainer', id="networkID"),
@@ -675,7 +721,7 @@ def main():
             if not legal_values:
                 close_node_panel()
 
-                content = html.Div("Nothing found", style={"width": "50%", "position":"relative", "top": "0px", "left":"12px"})
+                content = html.Div("Nothing found, please type a valid node id or node group!", style={"width": "50%", "position":"relative", "top": "0px", "left":"12px", "color":"red"})
             i += 1
         converted_legal_values = list(map(lambda x: {'id': x}, legal_values))
         all_selectable, selectable_legal_values = are_nodes_selectable(converted_legal_values)
@@ -921,7 +967,7 @@ def main():
             #check if value is in network
             if not value:
                 close_node_panel()
-                content = html.Div("Nothing found", style={"width": "50%", "position":"relative", "top": "0px", "left":"12px"})
+                content = html.Div("Nothing found, please type a valid node id or node group!", style={"width": "50%", "position":"relative", "top": "0px", "left":"12px", "color":"red"})
             else:
                 legal_values, content = input_button_clicked(value.split(","), new_elements)
                 if legal_values:
