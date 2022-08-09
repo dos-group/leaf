@@ -30,7 +30,10 @@ if __name__ == "__main__":
             'pandas',
             'simpy',
             'tqdm',
-            'dash', 'dash-cytoscape', 'dash-bootstrap-components'
+            'dash==2.4.1',
+            'dash-cytoscape==0.2.0',
+            'dash-bootstrap-components==1.1.0',
+            'plotly==5.8.0'
         ],
         extras_require={
             "docs": ["sphinx", "alabaster"]

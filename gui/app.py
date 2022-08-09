@@ -444,8 +444,9 @@ def main():
         },
         elements=infrastructure_to_cyto_dict(infrastructure["100"]),
         style=NETWORK_STYLE,
-        maxZoom=10,
-        minZoom=0.1,
+        #Set the min and max zoom
+        #maxZoom=10,
+        #minZoom=0.1,
         stylesheet=NETWORK_STYLESHEET,
         id="network"
 
@@ -623,7 +624,6 @@ def main():
                     el["style"]["height"] = '100px'
 
         if selected_node_data and is_first_call:
-            print(nodeID)
             NETWORK_STYLESHEET.append({
                 "selector": "." + nodeID,
                 "style": {
@@ -674,7 +674,6 @@ def main():
 
     def input_button_clicked(values, current_elements):
         legal_values = []
-        print(values)
         i = 0
         content = html.Div()
         while i < len(values):
@@ -866,14 +865,11 @@ def main():
         # filter button interaction
         filter_output = None
         if filter_n_clicks == filter_n_clicks_backup[0]:
-            print("filter clicked")
             if filter_n_clicks % 2 != 0:
-                print("open")
                 filter_icon = "open"
                 filter_n_clicks_backup[0] += 1
                 OPTIONS_CONTAINER["display"] = "flex"
             else:
-                print("close")
                 filter_icon = "close"
                 filter_n_clicks_backup[0] += 1
                 OPTIONS_CONTAINER["display"] = "none"
@@ -924,7 +920,6 @@ def main():
             else:
                 legal_values, content = input_button_clicked(value.split(","), new_elements)
                 if legal_values:
-                    print(legal_values)
                     last_plot[0] = legal_values
 
             sum_chart_figure = sum_power_fig(measurments, last_plot[0])
