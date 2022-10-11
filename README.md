@@ -106,5 +106,6 @@ Bibtex:
 
 ## 💚 Projects using LEAF
 
-- Philipp Wiesner, Ilja Behnke, Dominik Scheinert,  Kordian Gontarska, and Lauritz Thamsen. "[Let's Wait Awhile: How Temporal Workload Shifting Can Reduce Carbon Emissions in the Cloud](https://arxiv.org/pdf/2110.13234.pdf)" In the Proceedings of the *22nd International Middleware Conference*. ACM. 2021 [[code](https://github.com/dos-group/lets-wait-awhile)]
-- Liam Brugger. "An Evaluation of Carbon-Aware Load Shifting Techniques" *Bachelor Thesis*. 2021 [[code](https://gitlab.com/lbrugger72/Bachelor)]
+- Yana Kernerman. "Interactive visualization of energy consumption in edge and fog computing simulations". *Bachelor Thesis*. 2022 [[code](https://github.com/dos-group/leaf/tree/gui)]
+- Philipp Wiesner, Ilja Behnke, Dominik Scheinert,  Kordian Gontarska, and Lauritz Thamsen. "[Let's Wait Awhile: How Temporal Workload Shifting Can Reduce Carbon Emissions in the Cloud](https://arxiv.org/pdf/2110.13234.pdf)". *22nd International Middleware Conference*. ACM. 2021 [[code](https://github.com/dos-group/lets-wait-awhile)]
+- Liam Brugger. "An Evaluation of Carbon-Aware Load Shifting Techniques". *Bachelor Thesis*. 2021 [[code](https://gitlab.com/lbrugger72/Bachelor)]
