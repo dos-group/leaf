@@ -106,7 +106,8 @@ Bibtex:
 
 ## 💚 Projects using LEAF
 
-- Yana Kernerman. "Interactive Visualization of Energy Consumption in Edge and Fog Computing Simulations." *Bachelor Thesis*. 2022 [[code](https://github.com/dos-group/leaf/tree/gui)]
+- Zizheng Liu. "A Web-Based User Interface for the LEAF Simulator". *MSc IT+ Dissertation* at U of Glasgow. 2022 [[code](https://github.com/ZZZZZZZZZED/leaf-GUI)]
+- Yana Kernerman. "Interactive Visualization of Energy Consumption in Edge and Fog Computing Simulations". *Bachelor Thesis* at TU Berlin. 2022 [[code](https://github.com/dos-group/leaf/tree/gui)]
 - Sangeeta Kakati and Rupa Deka. "[Computational and Adaptive Offloading in Edge/Fog based IoT Environments](https://ieeexplore.ieee.org/document/9847743)." *2nd International Conference on Intelligent Technologies (CONIT)*. IEEE. 2022
 - Philipp Wiesner, Ilja Behnke, Dominik Scheinert,  Kordian Gontarska, and Lauritz Thamsen. "[Let's Wait Awhile: How Temporal Workload Shifting Can Reduce Carbon Emissions in the Cloud](https://arxiv.org/pdf/2110.13234.pdf)". *22nd International Middleware Conference*. ACM. 2021 [[code](https://github.com/dos-group/lets-wait-awhile)]
-- Liam Brugger. "An Evaluation of Carbon-Aware Load Shifting Techniques". *Bachelor Thesis*. 2021 [[code](https://gitlab.com/lbrugger72/Bachelor)]
+- Liam Brugger. "An Evaluation of Carbon-Aware Load Shifting Techniques". *Bachelor Thesis* at TU Berlin. 2021 [[code](https://gitlab.com/lbrugger72/Bachelor)]
