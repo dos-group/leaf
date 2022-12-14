@@ -106,6 +106,7 @@ Bibtex:
 
 ## 💚 Projects using LEAF
 
+- Rui Zhang, Xuesen Chu, Ruhui Ma, Meng Zhang, Liwei Lin, Honghao Gao, Haibing Guan. "[OSTTD: Offloading of Splittable Tasks with Topological Dependence in Multi-Tier Computing Networks](https://ieeexplore.ieee.org/abstract/document/9978666)". *IEEE Journal on Selected Areas in Communications*. 2022.
 - Zizheng Liu. "A Web-Based User Interface for the LEAF Simulator". *MSc IT+ Dissertation* at U of Glasgow. 2022 [[code](https://github.com/ZZZZZZZZZED/leaf-GUI)]
 - Yana Kernerman. "Interactive Visualization of Energy Consumption in Edge and Fog Computing Simulations". *Bachelor Thesis* at TU Berlin. 2022 [[code](https://github.com/dos-group/leaf/tree/gui)]
 - Sangeeta Kakati and Rupa Deka. "[Computational and Adaptive Offloading in Edge/Fog based IoT Environments](https://ieeexplore.ieee.org/document/9847743)." *2nd International Conference on Intelligent Technologies (CONIT)*. IEEE. 2022
